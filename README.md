@@ -15,9 +15,13 @@ Buy phase (in between levels):
 - Use remaining cargo to buy different cards. 
 - Choose next level (choose cargo and target number as a pair)
 
-
-
-
+## Graphical User Interface
+### Main Menu
+![](GUI/Main Menu.jpg)
+### Game Screen
+![](GUI/Game Screen.jpg)
+### Shop Screen
+![](GUI/Shop Screen.jpg)
 
 
 
