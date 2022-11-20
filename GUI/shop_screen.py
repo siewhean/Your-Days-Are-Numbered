@@ -25,6 +25,7 @@ def loadfont(fontpath, private=True, enumerable=True):
 
 font = loadfont("LoRes.ttf")
 root = tk.Tk()
+root.title("YOUR DAYS ARE NUMBERED")
 root.configure(background='black')
 panel = tk.Label(root, bg="black")
 panel.pack(side="bottom", fill="both", expand="yes")
@@ -36,3 +37,5 @@ root.state('zoomed')
 def back():
     root.destroy()
     import main_menu
+
+root.mainloop()

@@ -5,15 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fc3955bf-184b-4eed-aba9-1ec5e64071db" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/CTD-X-Game.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cards.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/img.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GUI/game_screen.py" beforeDir="false" afterPath="$PROJECT_DIR$/GUI/game_screen.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GUI/main_menu.py" beforeDir="false" afterPath="$PROJECT_DIR$/GUI/main_menu.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GUI/shop_screen.py" beforeDir="false" afterPath="$PROJECT_DIR$/GUI/shop_screen.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,7 +62,11 @@
       <option name="presentableId" value="Default" />
       <updated>1668582245245</updated>
       <workItem from="1668582251584" duration="30528000" />
-      <workItem from="1668874362770" duration="381000" />
+      <workItem from="1668874362770" duration="2005000" />
+      <workItem from="1668926575991" duration="88000" />
+      <workItem from="1668929348433" duration="1691000" />
+      <workItem from="1668952933152" duration="122000" />
+      <workItem from="1668956489895" duration="1923000" />
     </task>
     <servers />
   </component>
@@ -86,6 +85,8 @@
     </option>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/CTD_X_Game$game_screen.coverage" NAME="game_screen Coverage Results" MODIFIED="1668874133827" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/GUI" />
+    <SUITE FILE_PATH="coverage/CTD_X_Game$game_screen.coverage" NAME="game_screen Coverage Results" MODIFIED="1668952978825" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/GUI" />
+    <SUITE FILE_PATH="coverage/CTD_X_Game$main_menu.coverage" NAME="main_menu Coverage Results" MODIFIED="1668958377928" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/GUI" />
+    <SUITE FILE_PATH="coverage/CTD_X_Game$shop_screen.coverage" NAME="shop_screen Coverage Results" MODIFIED="1668953039033" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/GUI" />
   </component>
 </project>
