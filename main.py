@@ -23,7 +23,7 @@ class Card:
         self.cost: int = cost 
 
     def __str__(self) -> str:
-        return f"Card {self.operation} {self.value}"
+        return f"Card Operation: {self.operation} Value: {self.value}"
 
     def use(self, currentValue: int) -> int: 
         """Returns new current value after card is played"""
@@ -86,17 +86,25 @@ class Player:
 
 def main():
     """Whole game logic here"""
-    # init game variable here 
-    # load in the csv file, create card objects here 
+    # game setup here 
     player = Player()
-
-    # mycard = Card(operation="*", value=3, cost=1)
-    # print(mycard.use(6))
-    # print(Card.operations_table["+"](2,2))
+    player.mainDeck = load_cards_csv().copy()
+    run = False
+    turn = 1
+    # gameStates: menu, play, buy
+    gameState = "play"
 
     # start play phase here
     # gui 
-    # objective number, current number 
+    # objective number, current number
+    while run:
+        if gameState == "menu":
+            pass
+        elif gameState == "play":
+            pass 
+        elif gameState == "buy":
+            pass 
+
     # five cards 
     # turn 1 
 
@@ -111,6 +119,16 @@ def main():
     # TO DO HERE
     # start buy phase here 
     # buy phase loop
+
+def load_cards_csv() -> list[Card]:
+    """
+    csv headings: operation,value,cost
+    returns a list of card objects
+    """
+    with open("cards.csv") as f:
+        cards = [Card(*tuple(i.split(sep=","))) for i in f.read().split()]
+    return cards
+
 
 if __name__ == "__main__":
     main()
