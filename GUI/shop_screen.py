@@ -53,9 +53,15 @@ deck_button_frame.configure(bg="black")
 deck_button_frame.place(x=260 + (card_padx * 5), y=y_padding_from_top_window + (2 * font_size_offset) + back_button_height + (3 * back_button_y_offset))
 
 #################################################### Create Buttons ####################################################
+description_button_frame = tk.Frame(root)
+description_button_frame.configure(bg="black")
+description_button_frame.pack()
+
 cards[0] = tk.Button(deck_button_frame, text="Card 1", font=("LoRes 9 Plus OT Wide", 18), padx=card_padx, pady=60,
                    command=lambda: clicked(cards[0], 1))
 cards[0].grid(row=0, column=0, padx=10)
+cost1 = tk.Label(description_button_frame, text = "cost:" + str("4"), font=("LoRes 9 Plus OT Wide", 9), fg = "white", bg = "black")
+cost1.grid(row = 1, column = 0, padx = 10)
 
 cards[1] = tk.Button(deck_button_frame, text="Card 2", font=("LoRes 9 Plus OT Wide", 18), padx=card_padx, pady=60,
                     command=lambda: clicked(cards[1], 2))
@@ -77,7 +83,7 @@ cards[4].grid(row=0, column=4, padx=10)
 next_button_frame = tk.Frame(root)
 next_button_frame.pack(pady=350)
 
-Next_Turn = tk.Button(next_button_frame, text="NEXT TURN", font=("LoRes 9 Plus OT Wide", 14), fg="white", bg="black",
+Next_Turn = tk.Button(next_button_frame, text="NEXT LEVEL", font=("LoRes 9 Plus OT Wide", 14), fg="white", bg="black",
                       command=lambda: next_turn(cards))
 Next_Turn.grid()
 
