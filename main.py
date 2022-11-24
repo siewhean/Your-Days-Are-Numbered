@@ -48,9 +48,10 @@ class Player:
     
     # play phase functions
     def reset_deck(self) -> None:
-        """"""
+        """Fill temp deck. Empty hand."""
         self.temp_deck = self.main_deck.copy()
         shuffle(self.temp_deck)
+        self.hand.clear()
         self.win = False
 
     def draw(self) -> None:
@@ -72,7 +73,12 @@ class Player:
 
     def end_turn(self) -> None:
         """Call end of turn actions."""
-        self.update_cargo(number = -1)
+        # put cards from hand to bottom of deck
+        for _ in range(len(self.hand)):
+            card = self.hand.pop(0)
+            self.temp_deck.insert(0, card)
+
+        self.update_cargo(number=-1)
         while len(self.hand) < 5:
             self.draw() 
     
@@ -85,6 +91,11 @@ class Player:
         self.win = self.current_number == self.objective_number
         return self.win
 
+    def debug_print(self, deck):
+        """Prints cards in hand or temp_deck"""
+        for i in deck:
+            print(i)
+
     # buy phase functions
     def add_to_deck(self, card: Card) -> None:
         """Called when player successfully buys card. Adds card to mainDeck"""
@@ -94,6 +105,10 @@ class Player:
         """"""
         self.cargo += reward
         self.objective_number = newObjective
+
+    def is_last_turn(self):
+        """Determines if current turn is the final turn"""
+        pass
 
 def main():
     """Whole game logic here"""
@@ -107,35 +122,41 @@ def main():
     player.main_deck = load_cards_csv().copy()
     player.reset_deck()
     player.objective_number = 5
+    player.cargo = 10
 
     # turn starts here 
-    for _ in range(player.hand_size):
-        player.draw() 
-    render_turn(player, turn)
+    while not player.is_win():
+        for _ in range(player.hand_size):
+            # check if lose here 
+            player.draw() 
+        render_turn(player, turn)
 
-    valid_inputs = list(range(-1,player.hand_size))
-    # card playing loop
-    while True:
-        render_hand(player, valid_inputs)
-        player_choice = get_player_action(valid_inputs)
-        
-        if player_choice == -1:
-            print("ending turn...")
-            break 
-        else:
-            player.play_card(player_choice) 
-            # prevent same card from playing
-            valid_inputs.remove(player_choice)
-
-            # end turn if no cards left
-            if valid_inputs == [-1]:
+        valid_inputs = list(range(-1,player.hand_size))
+        # card playing loop
+        while True:
+            render_hand(player, valid_inputs)
+            player_choice = get_player_action(valid_inputs)
+            
+            if player_choice == -1:
                 print("ending turn...")
                 break 
-    # WORK IN PROGRESS HERE 
+            else:
+                player.play_card(player_choice) 
+                # prevent same card from playing
+                valid_inputs.remove(player_choice)
 
-        
-
+                # end turn if no cards left
+                if valid_inputs == [-1]:
+                    print("ending turn...")
+                    break 
+        # end of turn actions
+        player.end_turn()
+        turn += 1
     
+    # tested: can win 
+    # untested: cannot lose 
+    print("Win" if player.win else "Lose")
+
     # gameStates: menu, play, buy
     gameState = "play"
 
@@ -178,10 +199,10 @@ def load_cards_csv() -> list[Card]:
 
 def render_hand(player: Player, valid_inputs: list[int]):
     """Prints out all relevant info per card play"""
-    print("-"*10)
+    print("-"*15)
     print(f"Objective number: {player.objective_number}")
     print(f"Current Number: {player.current_number}")
-    print("-"*10)
+    print("-"*15)
 
     # print hand 
     print(f"Hand (playable cards)")
@@ -193,6 +214,14 @@ def render_turn(player: Player, turn: int):
     print(f"Turn: {turn}")
     print(f"Cargo: {player.cargo}")
     print(f"Cards in deck: {player.cards_left()}")
+
+def render_end_game_report(player: Player, turn: int):
+    """Runs after play phase, before buy phase"""
+    print("-"*15)
+    print(f"Turns taken: {turn}")
+    print(f"Cargo: {player.cargo}")
+    print(f"Cards in deck: {player.cards_left()}")
+    print("-"*15)
 
 def get_player_action(valid_inputs: list[int]) -> int:
     """Get player action and return card position. -1 to indicate end turn"""
