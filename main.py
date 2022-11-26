@@ -155,6 +155,9 @@ def main():
     
     # tested: can win 
     # untested: cannot lose 
+    # cost = value * value_of_operator
+    # power ** and remainder cards %
+    
     print("Win" if player.win else "Lose")
 
     # gameStates: menu, play, buy
