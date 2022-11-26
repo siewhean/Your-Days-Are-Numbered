@@ -43,7 +43,7 @@ def next_turn(cards):
     for i in range(len(cards)):
         cards[i]['state'] = 'normal'
 
-def back():
+def home():
     root.destroy()
     import main_menu
 
@@ -57,8 +57,8 @@ def back():
 y_padding_from_top_window = 0
 deck_box_height = 150
 font_size_offset = 5
-back_button_height = 50
-back_button_y_offset = 10
+home_button_height = 50
+home_button_y_offset = 10
 card_padx = 8
 cards = ["cards_1", "cards2", "cards_3", "cards_4", "cards_5"]
 
@@ -84,14 +84,14 @@ for i in range(5):
     cards[i] = Cards(i, "normal")
     # cards[i].generate_buttons(i, root)
 
-################################################## Insert Back Button ##################################################
-back_button_frame = tk.Frame(root)
-back_button_frame.configure(bg="black")
-back_button_frame.pack()
+################################################## Insert Home Button ##################################################
+home_button_frame = tk.Frame(root)
+home_button_frame.configure(bg="black")
+home_button_frame.pack()
 
 download_icon = tk.PhotoImage(file='home_icon.png')
-Back = tk.Button(back_button_frame, image=download_icon, command=back)
-Back.grid(row=0, column=0, padx=(0, 1000), pady=back_button_y_offset)
+Home = tk.Button(home_button_frame, image=download_icon, command=home)
+Home.grid(row=0, column=0, padx=(0, 1000), pady=home_button_y_offset)
 
 ############################################# Insert Target Heading Value #############################################
 Target_Heading_Title = tk.Label(root, text='TARGET\nHEADING', font=("LoRes 9 Plus OT Wide", 14), fg="white", bg="black",
@@ -133,11 +133,11 @@ Next_Turn.grid(row=0, column=0)
 ################################################### Create Deck Box ###################################################
 deck_box = tk.Canvas(root, width=900, height=deck_box_height, bd=30, bg='black', highlightthickness=5,
                      highlightbackground="white")
-deck_box.place(x=200, y=520 - deck_box_height + y_padding_from_top_window + (2 * font_size_offset) + back_button_height + (3 * back_button_y_offset))
+deck_box.place(x=200, y=520 - deck_box_height + y_padding_from_top_window + (2 * font_size_offset) + home_button_height + (3 * home_button_y_offset))
 
 deck_button_frame = tk.Frame(root)
 deck_button_frame.configure(bg="black")
-deck_button_frame.place(x=260 + (card_padx * 5), y=390 + y_padding_from_top_window + (2 * font_size_offset) + back_button_height + (3 * back_button_y_offset))
+deck_button_frame.place(x=260 + (card_padx * 5), y=390 + y_padding_from_top_window + (2 * font_size_offset) + home_button_height + (3 * home_button_y_offset))
 
 #################################################### Create Buttons ####################################################
 cards[0] = tk.Button(deck_button_frame, text="Card 1", font=("LoRes 9 Plus OT Wide", 18), padx=card_padx, pady=60,
