@@ -166,15 +166,15 @@ class Player:
 
     def populate_shop(self) -> None:
         """fills shop with items based on how much cargo player has"""
-        all_cards = load_dan_cards_csv("Card Data.csv")
+        all_cards: list[Card] = load_dan_cards_csv("Card Data.csv")
         # pulls all cards that cost less that self.cargo
-        possible_cards = list(filter(lambda x: x.cost <= self.cargo, all_cards))
+        possible_cards: list[Card] = list(filter(lambda x: x.cost <= self.cargo, all_cards))
         # cheaper cards are more likely to be drawn, caps at 5 times the odds of most expensive card.
-        draw_odds = [min([self.cargo-card.cost+1, 5]) for card in possible_cards]
+        draw_odds: list[int] = [min([self.cargo-card.cost+1, 5]) for card in possible_cards]
 
-        self.shop_choices = choices(possible_cards, weights=draw_odds , k=5)
+        self.shop_choices: list[Card] = choices(possible_cards, weights=draw_odds , k=5)
         # make choices unique in id()
-        self.shop_choices = [card._copy() for card in self.shop_choices]
+        self.shop_choices: list[Card] = [card._copy() for card in self.shop_choices]
 
     def next_level(self, reward: int) -> None:
         """generates a new level"""
@@ -182,12 +182,10 @@ class Player:
         self.cargo += reward
         self.level += 1
 
-        # new objective is a function that takes the current value and level 
+        # new objective is a math function that takes the current value and level 
         # and generates a numerical difference in the + or - direction. target is never negative for now.
-
-        # can add comment to explain what is happening here?
-        _var = 8
-        modify_objective = self.level*_var + randint(0, self.level*_var//2)
+        _variance = 8
+        modify_objective: int = self.level*_variance + randint(0, self.level*_variance//2)
 
         if choice([True, False]) or modify_objective > self.objective_number:
             self.objective_number += modify_objective
