@@ -17,6 +17,7 @@ class Card:
         "**": lambda currentValue, cardValue: currentValue ** cardValue,
         "%" : lambda currentValue, cardValue: currentValue %  cardValue if currentValue >= 0 else -(abs(currentValue) % cardValue)
     }
+    # generate cost for shop phase
     cost_tiers = {
         "+" : 1, "-" : 1, "*" : 2, "//": 2, "**": 3, "%" : 3
     }
@@ -104,8 +105,8 @@ class Player:
             print("you win! end your turn to proceed to shop.")
         
     def update_cargo(self, number: int) -> None:
-        """Updates cargo, used at the end of turn and during buy phase"""
-        self.cargo += number
+        """Updates cargo, used at the end of turn. Lowest cargo is 0."""
+        self.cargo = self.cargo + number if self.cargo + number >= 0 else 0
 
     def is_win(self) -> bool:
         """Check win condition."""
@@ -124,7 +125,7 @@ class Player:
                 self.temp_deck.insert(0, card)
 
         self.hand.clear()
-        self.update_cargo(number=-1)
+        self.update_cargo(number= -1)
         self.update_turn_state()
         
     def draw_hand(self) -> None:
@@ -169,7 +170,7 @@ class Player:
         # pulls all cards that cost less that self.cargo
         possible_cards = list(filter(lambda x: x.cost <= self.cargo, all_cards))
         # cheaper cards are more likely to be drawn, caps at 5 times the odds of most expensive card.
-        draw_odds = [min([self.cargo-i.cost+1, 5]) for i in possible_cards]
+        draw_odds = [min([self.cargo-card.cost+1, 5]) for card in possible_cards]
 
         self.shop_choices = choices(possible_cards, weights=draw_odds , k=5)
 
@@ -182,6 +183,7 @@ class Player:
         # new objective is a function that takes the current value and level 
         # and generates a numerical difference in the + or - direction. target is never negative for now.
 
+        # can add comment to explain what is happening here?
         _var = 8
         modify_objective = self.level*_var + randint(0, self.level*_var//2)
 
@@ -192,7 +194,8 @@ class Player:
 
 
 
-def gamestate(player: Player) -> Player:
+def play_phase(player: Player) -> Player:
+    """Play Phase logic"""
     turn = 1
     player.reset_deck()
 
@@ -242,7 +245,7 @@ def gamestate(player: Player) -> Player:
 
 
 
-def shop(player: Player) -> Player:
+def shop_phase(player: Player) -> Player:
     """shop menu operation"""
     # when shop is called, populate shop
     player.populate_shop()
@@ -291,12 +294,11 @@ def main_cmd():
     player = create_player() 
 
     while True:
-        player = gamestate(player)
+        player = play_phase(player)
         if player.turn_state == "dead":
             break
-        player = shop(player)
+        player = shop_phase(player)
 
-    # last line here 
 
 def load_dan_cards_csv(directory: str) -> list[Card]:
     """

@@ -1,11 +1,7 @@
-import tkinter as tk
-root = tk.Tk()
+"""
+Bug fix: 
+prevent cargo from going negative
 
-button = tk.Button(root, text="Press")
-button.pack()
+Test: (put potential test cases here)
 
-label = tk.Label(root, text="Hello")
-label.pack()
-
-
-root.mainloop()
+"""
