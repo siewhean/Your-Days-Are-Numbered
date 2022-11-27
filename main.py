@@ -173,6 +173,8 @@ class Player:
         draw_odds = [min([self.cargo-card.cost+1, 5]) for card in possible_cards]
 
         self.shop_choices = choices(possible_cards, weights=draw_odds , k=5)
+        # make choices unique in id()
+        self.shop_choices = [card._copy() for card in self.shop_choices]
 
     def next_level(self, reward: int) -> None:
         """generates a new level"""
