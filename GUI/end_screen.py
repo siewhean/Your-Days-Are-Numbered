@@ -30,10 +30,6 @@ panel.pack(side="bottom", fill="both", expand="yes")
 # Maximise Window on Run
 root.state('zoomed')
 
-def next():
-    root.destroy()
-    import game_screen
-
 def shop():
     root.destroy()
     import shop_screen
@@ -55,12 +51,22 @@ Title = tk.Label(root, text='GAME OVER', font=("LoRes 9 Plus OT Wide", 60), fg="
 Title.pack(pady=(y_padding_from_top_window, 0))
 Title.pack()
 
+import random
+
+Subtitle_list=["That's rough, buddy.", "Too bad!", "My cabbages! :(", "This is extremely not stonks.", "Lousiest gameplay of the year"]
+
+Subtitle = tk.Label(root, text=random.choice(Subtitle_list), font=("LoRes 9 Plus OT Wide", 30), fg="white", bg="black",
+                 padx=-10)
+Subtitle.pack(pady=(y_padding_from_top_window, 0))
+Subtitle.pack()
+
+
 ################################################## Insert Play Button ##################################################
 button_frame = tk.Frame(root)
 button_frame.configure(bg="black")
 button_frame.pack(pady=100)
 
-Main_Menu_Button = tk.Button(button_frame, text="MAIN MENU", font=("LoRes 9 Plus OT Wide", 24), fg="white", bg="black",
+Main_Menu_Button = tk.Button(button_frame, text="Try Again?", font=("LoRes 9 Plus OT Wide", 24), fg="white", bg="black",
                         borderwidth=10, highlightbackground="white",
                         command=lambda: home())
 Main_Menu_Button.grid(row=0, column=0, padx=50)
