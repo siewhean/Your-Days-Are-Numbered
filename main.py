@@ -190,7 +190,7 @@ class Player:
         if choice([True, False]) or modify_objective > self.objective_number:
             self.objective_number += modify_objective
         else:
-            self.objective_number -= modify_objective
+            self.objective_number -= modify_objective 
 
 
 
