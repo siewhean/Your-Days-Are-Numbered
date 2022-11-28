@@ -5,6 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fc3955bf-184b-4eed-aba9-1ec5e64071db" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/GUI/end_screen.py" beforeDir="false" afterPath="$PROJECT_DIR$/GUI/end_screen.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -50,7 +51,7 @@
       <recent name="C:\Users\loan\OneDrive - Singapore University of Technology and Design\Documents\GitHub\CTD-X-Game" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.main_menu">
+  <component name="RunManager" selected="Python.end_screen">
     <configuration name="end_screen" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="CTD-X-Game" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -116,9 +117,9 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.end_screen" />
         <item itemvalue="Python.main_menu" />
         <item itemvalue="Python.shop_screen" />
-        <item itemvalue="Python.end_screen" />
       </list>
     </recent_temporary>
   </component>

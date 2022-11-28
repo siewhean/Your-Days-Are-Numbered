@@ -53,7 +53,12 @@ Title.pack()
 
 ##################################################### Insert Level Score ###############################################
 
-Level_score = tk.Label(root, text="YOU DIED ON: Level 10", font=("LoRes 9 Plus OT Wide", 15), fg="white", bg="black",
+def level_number():
+    import main
+    number = "placeholder" #INSERT LEVEL NUMBER HERE
+    return number
+
+Level_score = tk.Label(root, text=F"YOU LOST ON: Level {level_number()}", font=("LoRes 9 Plus OT Wide", 15), fg="white", bg="black",
                  padx=-10)
 Level_score.pack(pady=0)
 Level_score.pack()
@@ -71,7 +76,7 @@ R_G = "It seems that the Force was not with you."
 R_H = "You let a DALEK on board?? Why?????"
 R_J = "Should we get out and push?\nOh right, we're in space."
 R_K = "You seem to have died. Hmm."
-R_L = "A valiant effort. I guess."
+R_L = "This is a certified bruh moment"
 
 Death_list = [R_A, R_B, R_C, R_D, R_E, R_F, R_G, R_H, R_J, R_K, R_L]
 
