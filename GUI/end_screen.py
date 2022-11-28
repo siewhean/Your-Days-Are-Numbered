@@ -51,24 +51,43 @@ Title = tk.Label(root, text='GAME OVER', font=("LoRes 9 Plus OT Wide", 60), fg="
 Title.pack(pady=(y_padding_from_top_window, 0))
 Title.pack()
 
-import random
+##################################################### Insert Level Score ###############################################
 
-Subtitle_list=["That's rough, buddy.", "Too bad!", "My cabbages! :(", "This is extremely not stonks.", "Lousiest gameplay of the year"]
-
-Subtitle = tk.Label(root, text=random.choice(Subtitle_list), font=("LoRes 9 Plus OT Wide", 30), fg="white", bg="black",
+Level_score = tk.Label(root, text="YOU DIED ON: Level 10", font=("LoRes 9 Plus OT Wide", 15), fg="white", bg="black",
                  padx=-10)
-Subtitle.pack(pady=(y_padding_from_top_window, 0))
-Subtitle.pack()
+Level_score.pack(pady=0)
+Level_score.pack()
 
+##################################################### Insert Death Message #############################################
 
-################################################## Insert Play Button ##################################################
+import random
+R_A = "That's rough, buddy."
+R_B = "Too bad!"
+R_C = "Your cabbages! :("
+R_D = "This is extremely not stonks."
+R_E = "Lousiest gameplay of the year award goes to..."
+R_F = "Your co-pilot was not the impostor. Oops."
+R_G = "It seems that the Force was not with you."
+R_H = "You let a DALEK on board?? Why?????"
+R_J = "Should we get out and push?\nOh right, we're in space."
+R_K = "You seem to have died. Hmm."
+R_L = "A valiant effort. I guess."
+
+Death_list = [R_A, R_B, R_C, R_D, R_E, R_F, R_G, R_H, R_J, R_K, R_L]
+
+Death_message = tk.Label(root, text=random.choice(Death_list), font=("LoRes 9 Plus OT Wide", 30), fg="white", bg="black",
+                 padx=-10)
+Death_message.pack(pady=35)
+Death_message.pack()
+
+################################################## Insert Main Menu Button #############################################
 button_frame = tk.Frame(root)
 button_frame.configure(bg="black")
-button_frame.pack(pady=100)
+button_frame.pack(pady=65)
 
 Main_Menu_Button = tk.Button(button_frame, text="Try Again?", font=("LoRes 9 Plus OT Wide", 24), fg="white", bg="black",
                         borderwidth=10, highlightbackground="white",
                         command=lambda: home())
-Main_Menu_Button.grid(row=0, column=0, padx=50)
+Main_Menu_Button.grid(row=1, column=0, padx=50)
 
 root.mainloop()
