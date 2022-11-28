@@ -5,8 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fc3955bf-184b-4eed-aba9-1ec5e64071db" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/LoRes.ttf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GUI/shop_screen.py" beforeDir="false" afterPath="$PROJECT_DIR$/GUI/shop_screen.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GUI/game_screen.py" beforeDir="false" afterPath="$PROJECT_DIR$/GUI/game_screen.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GUI/main_menu.py" beforeDir="false" afterPath="$PROJECT_DIR$/GUI/main_menu.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -46,6 +49,9 @@
   }
 }</component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\loan\OneDrive - Singapore University of Technology and Design\Documents\GitHub\CTD-X-Game" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\loan\OneDrive - Singapore University of Technology and Design\Documents\GitHub\CTD-X-Game\GUI" />
       <recent name="C:\Users\loan\OneDrive - Singapore University of Technology and Design\Documents\GitHub\CTD-X-Game" />
@@ -67,6 +73,8 @@
       <workItem from="1668956489895" duration="2690000" />
       <workItem from="1668959358107" duration="118000" />
       <workItem from="1669099678826" duration="703000" />
+      <workItem from="1669605456231" duration="771000" />
+      <workItem from="1669649957931" duration="1084000" />
     </task>
     <servers />
   </component>
@@ -85,8 +93,10 @@
     </option>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/CTD_X_Game$game_screen.coverage" NAME="game_screen Coverage Results" MODIFIED="1669099819716" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/GUI" />
-    <SUITE FILE_PATH="coverage/CTD_X_Game$main_menu.coverage" NAME="main_menu Coverage Results" MODIFIED="1669099750377" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/GUI" />
+    <SUITE FILE_PATH="coverage/CTD_X_Game$game_screen.coverage" NAME="game_screen Coverage Results" MODIFIED="1669651005210" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/GUI" />
+    <SUITE FILE_PATH="coverage/CTD_X_Game$main.coverage" NAME="main Coverage Results" MODIFIED="1669651042594" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CTD_X_Game$main_menu.coverage" NAME="main_menu Coverage Results" MODIFIED="1669517626327" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/GUI" />
     <SUITE FILE_PATH="coverage/CTD_X_Game$shop_screen.coverage" NAME="shop_screen Coverage Results" MODIFIED="1669100387248" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/GUI" />
+    <SUITE FILE_PATH="coverage/CTD_X_Game$test.coverage" NAME="test Coverage Results" MODIFIED="1669515448633" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

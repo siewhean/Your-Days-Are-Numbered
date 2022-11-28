@@ -54,9 +54,8 @@ class Card:
 class Player:
     def __init__(self) -> None:
         """Handles player actions"""
-
         ## Game Variables
-        # create a copy of mainDeck to play 
+        # create a copy of mainDeck to play
         self.main_deck: list[Card] = []
         self.temp_deck: list[Card] = []
 
@@ -100,8 +99,8 @@ class Player:
         card: Card = self.hand[position]
         self.current_number = card.use(self.current_number)
         if self.is_win():
-            print("-"*15)
-            print("you win! end your turn to proceed to shop.")
+            return True
+        return False
         
     def update_cargo(self, number: int) -> None:
         """Updates cargo, used at the end of turn and during buy phase"""
@@ -126,6 +125,7 @@ class Player:
         self.hand.clear()
         self.update_cargo(number=-1)
         self.update_turn_state()
+        print("End Turn")
         
     def draw_hand(self) -> None:
         """draw until 5 cards, or draw all remaining"""    
@@ -192,14 +192,16 @@ class Player:
         else:
             self.objective_number -= modify_objective
 
-
-
-def gamestate(player: Player) -> Player:
+def gamestate(player: Player, turn) -> Player:
+    print("gmaestate entered")
+    print("Player Objective Number: " + str(player.objective_number))
+    print("Turn: " + str(turn))
     turn = 1
+    print("Turn: " + str(turn))
+    from GUI import game_screen
     player.reset_deck()
 
     while True:
-
         turn_running = True
         player.draw_hand()
 
@@ -281,19 +283,24 @@ def home_screen_cmd() -> None:
 
 def create_player() -> Player:
     """creates a player with the starting hand"""
+    print("Player created")
     player = Player()
+    print("Player Objective Number: " + str(player.objective_number))
     player.main_deck = load_dan_cards_csv("Starter Deck.csv")
     return player
 
 def main_cmd():
     """Whole game logic here"""
 
-    home_screen_cmd()
+    # home_screen_cmd()
+    from GUI import main_menu
     # game setup here
-    player = create_player() 
+    player = create_player()
+    # turn = 0
+    print("Player Objective Number: " + str(player.objective_number))
 
     while True:
-        player = gamestate(player)
+        player = gamestate(player, turn)
         if player.turn_state == "dead":
             break
         player = shop(player)
@@ -325,7 +332,7 @@ def render_hand(player: Player):
     print(f"CURRENT HEADING: {player.current_number}")
     print("-"*15)
 
-    # print hand 
+    # print hand
     print(f"Hand (playable cards)")
     for i,_ in enumerate(player.hand):
         card:Card = _
@@ -371,7 +378,6 @@ def render_death(player: Player):
     print("Game Over")
     print("you have run out of cards!")
     print(f"Level: {player.level}")
-    input("press enter to return to main menu")
 
 def get_player_action(player:Player) -> int:
     """Get player action and return card position. -1 to indicate end turn"""
@@ -412,6 +418,9 @@ def get_shop_action(player:Player) -> int:
         else:
             print("Invalid input")
     return int(player_action)
+
+player = create_player()
+turn = 1
 
 if __name__ == "__main__":
     main_cmd()
