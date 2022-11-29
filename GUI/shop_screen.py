@@ -108,7 +108,7 @@ cards_button[4].grid(row=0, column=4, padx=10)
 
 ##################################################### Insert Cost #####################################################
 for i in range(5):
-    cards_cost[i] = tk.Label(description_button_frame, text="COST:" + "4",
+    cards_cost[i] = tk.Label(description_button_frame, text="COST:" + str("4"),
                              font=("LoRes 9 Plus OT Wide", 14), fg="white", bg="black")
     cards_cost[i].grid(row=0, column=i, padx=36)
 
