@@ -5,7 +5,8 @@ This is a rogue-like deck builder that aims to teach people math.
 
 from __future__ import annotations
 from random import shuffle, seed, randint, choice, choices
-from tkinter import *
+import tkinter as tk
+from tkinter import messagebox
 
 class Card:
 
@@ -65,18 +66,42 @@ class Player:
         self.hand_size = 5
 
         self.cargo: int = 10
-        self.level: int = 1
         self.current_number: int = 0 
         self.objective_number: int = 10
         self.difficulty: int = 8
         
         self.turn_state: str = 'continue'
+        self.level: int = 1
+        self.turn: int = 1
+
+        self.state: str = "game"
 
         ## Shop Variables
         self.shop_choices: list[Card] = []
         self.shop_size: int = 5
     
     # play phase functions
+
+    def to_game(self) -> None:
+        """denotes game mode == game"""
+        self.state = "game"
+
+    def to_shop(self) -> None:
+        """denotes game mode == shop"""
+        self.state = "shop"
+
+    def to_deathscreen(self) -> None:
+        """denotes game mode == death"""
+        self.state = "death"
+
+    def is_game(self) -> bool:
+        """checks game mode == game"""
+        return self.state == "game"
+
+    def is_shop(self) -> bool:
+        """checks game mode == shop"""
+        return self.state == "shop"
+
     def create_temp_deck(self) -> None:
         """makes copies of all cards from main_deck into temp_deck."""
         self.temp_deck.clear()
@@ -88,6 +113,8 @@ class Player:
         self.create_temp_deck()
         shuffle(self.temp_deck)
         self.hand.clear()
+
+        self.turn: int = 1
         self.turn_state: str = 'continue'
 
     def draw(self) -> None:
@@ -99,10 +126,8 @@ class Player:
     def play_card(self, position: int) -> None:
         """Player plays a card and update current number. Check win condition."""
         card: Card = self.hand[position]
+        assert card.usable
         self.current_number = card.use(self.current_number)
-        if self.is_win():
-            print("-"*15)
-            print("you win! end your turn to proceed to shop.")
         
     def update_cargo(self, number: int) -> None:
         """Updates cargo, used at the end of turn. Lowest cargo is 0."""
@@ -114,7 +139,7 @@ class Player:
         """Check win condition."""
         return self.current_number == self.objective_number
 
-    def is_dead(self):
+    def is_dead(self) ->bool:
         """Checks if player is out of cards"""
         return 0 == self.cards_left()
 
@@ -129,6 +154,7 @@ class Player:
         self.update_turn_state()
         if self.turn_state != "win":
             self.update_cargo(number= -1)
+            self.turn += 1
         
     def draw_hand(self) -> None:
         """draw until 5 cards, or draw all remaining"""    
@@ -142,10 +168,23 @@ class Player:
         """checks game state at the end of the turn. uses 'win', 'last', 'dead', 'continue'"""
         if self.is_win():
             self.turn_state = 'win'
-        elif self.is_dead():
+        elif self.is_dead() or self.turn_state == 'last':
             self.turn_state = 'dead'
         else:
             self.turn_state = 'continue'
+
+    def check_last_turn(self) -> bool:
+        """checks if it is last turn, flags "last" on self.turnstate"""
+        if self.is_dead():
+            self.turn_state = 'last'
+        return self.is_dead()
+
+    def any_cards_left(self) -> bool:
+        '''returns True if there are any cards left in hand'''
+        for card in self.hand:
+            if card.usable:
+                return True
+        return False
     
     def cards_left(self) -> int:
         """Returns number of cards left in the deck"""
@@ -205,19 +244,151 @@ class Player:
         else:
             self.objective_number -= modify_objective
 
+    
+
+############################################# BUTTON INPUTS ##########################################
+def turn_start(player:Player):
+    """called when turn starts"""
+    player.draw_hand()
+    if player.check_last_turn():
+        # tkinter.messagebox
+        messagebox.showinfo("Warning", "This is your final turn!")
+        print("This is your final turn!")
+        print("-"*15)
+
+def start_level(player: Player):
+    """called when each level starts"""
+    player.reset_deck()
+    player.to_game()
+    turn_start(player)
+
+def main_play_button():
+    """called on the menu to start the game"""
+    player = create_player()
+    start_level(player)
+    return player
+
+def card_button(player: Player, button_index: int):
+    """called when card button is clicked in play phase"""
+    try:
+        player.play_card(button_index)
+    except:
+        messagebox.showinfo("Invalid!", "you already played this card.")
+    if player.is_win():
+        # tkinter.messagebox
+        messagebox.showinfo('Level Clear!', 'End your turn to proceed to the card shop.')
+        print("-"*15)
+        print("you win! end your turn to proceed to shop.")
+    
+def next_turn_button(player: Player):
+    """called when next turn is clicked"""
+    player.end_turn()
+
+    if player.turn_state == "win":
+        player.populate_shop()
+        player.to_shop()
+    elif player.turn_state == "dead":
+        player.turn_state = "dead"
+        player.to_deathscreen()
+    else:
+        turn_start(player)
+
+def buy_button(player: Player, button_index: int):
+    """called when card is clicked in shop phase"""
+    try:
+        player.buy_card(button_index)
+    except:
+        # tkinter.messagebox
+        messagebox.showinfo("Insufficient Cargo!", "This card is too expensive!")
+        print("Card is too expensive!")
+
+def done_shopping(player: Player):
+    """called when player is done shopping"""
+    player.next_level(reward= 10)
+    start_level(player)
+
+def sim_input(player: Player) -> int:
+    '''simulated button clicks, accepts 0, 1, 2, 3, 4, -1, 'quit' '''
+    while True:
+        play_input = input("enter: ")
+        if not play_input in ['0','1','2','3','4', '-1', 'quit']:
+            print("invalid input")
+            continue
+
+        if play_input == '-1':
+            return -1
+
+        if play_input == 'quit':
+            return 5
+        
+        return int(play_input)
+
+        
+
+
+def main_adp():
+    player = None
+    start = True
+    home_screen_cmd()
+    while True:
+        root = tk.Tk()
+        root.withdraw()
+        choice = sim_input(player)
+        if start:
+            player:Player = main_play_button()
+            render_turn(player)
+            render_hand(player)
+            start = False
+        elif choice == 5:
+            render_death(player)
+            print("quitting...")
+            del player
+            return
+        elif player.is_game():
+            if choice == -1:
+                render_end_turn()
+                next_turn_button(player)
+
+                ## GRAPHICS
+                if player.is_game():
+                    render_turn(player)
+                    render_hand(player)
+                elif player.is_shop():
+                    render_end_game_report(player)
+                    render_shop(player)
+                elif player.turn_state == "dead":
+                    render_death(player)
+                    del player
+                    return
+                ## ---------
+            else:
+                card_button(player, choice)
+                render_hand(player)
+        elif player.is_shop():
+            if choice == -1 :
+                done_shopping(player)
+                render_shop_exit(player)
+                render_turn(player)
+                render_hand(player)
+            else:
+                buy_button(player, choice)
+                render_shop(player)
+
+
 def play_phase(player: Player) -> Player:
     """Play Phase logic"""
-    turn = 1
     player.reset_deck()
     while True:
         turn_running = True
         player.draw_hand()
+
         if player.is_dead():
             last_turn = True
             print("This is your final turn!")
             print("-"*15)
         else:
             last_turn = False
+
         render_turn(player,turn)
         #card play loop
         while turn_running:
@@ -238,14 +409,13 @@ def play_phase(player: Player) -> Player:
         player.end_turn()
         
         if player.turn_state == "win":
-            render_end_game_report(player, turn)
+            render_end_game_report(player)
             break
         elif player.turn_state == "dead" or last_turn:
             player.turn_state = "dead"
             render_death(player)
             break
-        else:
-            turn += 1
+
     return player
 
 def shop_phase(player: Player) -> Player:
@@ -268,8 +438,7 @@ def shop_phase(player: Player) -> Player:
                 print("Card is too expensive!")
         # terminate loop when done shopping 
     player.next_level(10)
-    print(f"starting new level... Target: {player.objective_number}. You recieve 10 more cargo!")
-    print("-"*15)
+    render_shop_exit(player)
     return player
 
 def home_screen_cmd() -> None:
@@ -279,7 +448,7 @@ def home_screen_cmd() -> None:
   |   |__| |__| |  \    |__/ |  |   |   ___]    |  | |  \ |___    | \| |__| |  | |__] |___ |  \ |___ |__/ 
                                                                                                          
                    ----- coded by Jean, Daniel, Ee Song, Saif, Siew Hean, Kaelen -----""")
-    input("press enter to start game")
+    print("type '0' to start game")
 
 def create_player() -> Player:
     """creates a player with the starting hand"""
@@ -290,6 +459,7 @@ def create_player() -> Player:
 def main_cmd():
     """Whole game logic here"""
     home_screen_cmd()
+    input()
     # game setup here
     player = create_player() 
     while True:
@@ -329,10 +499,14 @@ def render_hand(player: Player):
         if card.usable:
             print(f"Position {i} : {card.alt_str()}")
 
-def render_turn(player: Player, turn: int):
+def render_shop_exit(player:Player):
+    print(f"starting new level... Target: {player.objective_number}. You recieve 10 more cargo!")
+    print("-"*15)
+
+def render_turn(player: Player):
     """Only runs at the start of each turn"""
     print(f"     LEVEL: {player.level}")
-    print(f"      TURN: {turn}")
+    print(f"      TURN: {player.turn}")
     print(f"     CARGO: {player.cargo}")
     print(f"CARDS LEFT: {player.cards_left()}")
 
@@ -341,15 +515,14 @@ def render_end_turn():
     print("ending turn...")
     print("-"*15)
 
-def render_end_game_report(player: Player, turn: int):
+def render_end_game_report(player: Player):
     """Runs after play phase, before buy phase"""
     print("-"*15)
     print("You have reached the next spaceport!")
-    print(f"Turns taken: {turn}")
+    print(f"Turns taken: {player.turn}")
     print(f"Cargo: {player.cargo}")
     print(f"Cards left in deck: {player.cards_left()}")
     print("-"*15)
-    input("press enter to continue")
 
 def render_shop(player: Player):
     """Runs during shop phase"""
@@ -411,4 +584,4 @@ def get_shop_action(player:Player) -> int:
     return int(player_action)
 
 if __name__ == "__main__":
-    main_cmd()
+    main_adp()
