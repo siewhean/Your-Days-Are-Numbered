@@ -1,11 +1,24 @@
-import tkinter as tk
-root = tk.Tk()
+from main import Card
+from PIL import Image
 
-button = tk.Button(root, text="Press")
-button.pack()
+def new_csv_reader(directory: str) -> list[Card]:
+    """
+    create card obj that has operator value, cost is optional
+    """
+    with open(directory) as f:
+        # [1:] to exclude the heading 
+        card_info: list[str] = f.read().split()[1:]
+        cards = []
+        for i in card_info:
+            card_operation, card_value, card_cost, filepath = tuple(i.split(sep=","))
+            if card_cost == '':
+                new_card = Card(card_operation, int(card_value), filepath)
+            else:
+                new_card = Card(card_operation, int(card_value), filepath, int(card_cost)) 
+            cards.append(new_card)
+        return cards
 
-label = tk.Label(root, text="Hello")
-label.pack()
+csv_path = "Starter Deck.csv"
+a = new_csv_reader(csv_path)
 
-
-root.mainloop()
+Image.open(a[0].filepath).show()

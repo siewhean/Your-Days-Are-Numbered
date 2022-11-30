@@ -25,12 +25,17 @@ class Card:
         "+" : 1, "-" : 1, "*" : 2, "//": 2, "**": 3, "%" : 3
     }
 
-    def __init__(self, operation: str, value: int, cost: int = None) -> None:
+    card_back_path = "assets/Cards/back.png"
+
+    def __init__(self, operation: str, value: int, filepath: str, cost: int = None, ) -> None:
         """Card objects have a value and operation. Cost is used during buy phase only."""
         #  check if operation is valid (in operations_table.keys)
         self.operation: str = operation
         self.value: int = value
         self.usable: bool = True
+
+        self.filepath: str = filepath
+
         # find cost and function
         self.cost: int = self.value*self.cost_tiers[self.operation] if cost == None else cost
         self._function: function = self.operations_table[self.operation]
