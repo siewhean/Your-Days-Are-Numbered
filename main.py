@@ -381,7 +381,7 @@ def main_adp():
     root = tk.Tk()
     root.withdraw()
     home_screen_cmd()
-    from GUI import game_screen
+
     while True:
         # input simulation
         choice = sim_input(player)
