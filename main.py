@@ -67,7 +67,7 @@ class Player:
 
         self.cargo: int = 10
         self.current_number: int = 0 
-        self.objective_number: int = 10
+        self.target_number: int = 10
         self.difficulty: int = 8
         
         self.turn_state: str = 'continue'
@@ -137,7 +137,7 @@ class Player:
 
     def is_win(self) -> bool:
         """Check win condition."""
-        return self.current_number == self.objective_number
+        return self.current_number == self.target_number
 
     def is_dead(self) ->bool:
         """Checks if player is out of cards"""
@@ -237,12 +237,47 @@ class Player:
 
         modify_objective: int = base_modifier + random_modifier
 
-        is_increase: bool = choice([True, False]) or modify_objective > self.objective_number
+        is_increase: bool = choice([True, False]) or modify_objective > self.target_number
 
         if is_increase:
-            self.objective_number += modify_objective
+            self.target_number += modify_objective
         else:
-            self.objective_number -= modify_objective
+            self.target_number -= modify_objective
+
+    ########################## READING FUNCTIONS ##########################
+
+    def read_headings(self) -> dict:
+        """returns the target and current numbers"""
+        return {
+            "target" : self.target_number,
+            "current": self.current_number
+        }
+
+    def read_hand(self) -> list[Card]:
+        '''returns the hand of the player'''
+        return self.hand
+
+    def read_turn_info(self) -> dict:
+        """returns the level, turn, cargo, and cards left in tempdeck"""
+        return {
+            "level"     : self.level,
+            "turn"      : self.turn,
+            "cargo"     : self.cargo,
+            "cards left": len(self.temp_deck)
+        }
+
+    def read_shop_info(self) -> dict:
+        '''returns the shop choices, cargo, and cards in maindeck'''
+        return {
+            "choices"    : self.shop_choices,
+            "cargo"      : self.cargo,
+            "deck length": len(self.main_deck)
+        }
+
+    def read_level(self) -> int:
+        '''called on death to read the level of death'''
+        return self.level
+
 
     
 
@@ -277,6 +312,7 @@ def card_button(player: Player, button_index: int):
     if player.is_win():
         # tkinter.messagebox
         messagebox.showinfo('Level Clear!', 'End your turn to proceed to the card shop.')
+        # consider: change the next turn button to "to shop"
         print("-"*15)
         print("you win! end your turn to proceed to shop.")
     
@@ -329,23 +365,28 @@ def sim_input(player: Player) -> int:
 def main_adp():
     player = None
     start = True
+    # tk window simulation
+    root = tk.Tk()
+    root.withdraw()
     home_screen_cmd()
     while True:
-        root = tk.Tk()
-        root.withdraw()
+        # input simulation
         choice = sim_input(player)
         if start:
+            # start turn button
             player:Player = main_play_button()
             render_turn(player)
             render_hand(player)
             start = False
         elif choice == 5:
+            # concede button / testing kill command "quit"
             render_death(player)
             print("quitting...")
             del player
             return
         elif player.is_game():
             if choice == -1:
+                # next turn button
                 render_end_turn()
                 next_turn_button(player)
 
@@ -362,15 +403,18 @@ def main_adp():
                     return
                 ## ---------
             else:
+                # card buttons
                 card_button(player, choice)
                 render_hand(player)
         elif player.is_shop():
             if choice == -1 :
+                # finish shopping button
                 done_shopping(player)
                 render_shop_exit(player)
                 render_turn(player)
                 render_hand(player)
             else:
+                # buy card buttons
                 buy_button(player, choice)
                 render_shop(player)
 
@@ -389,7 +433,7 @@ def play_phase(player: Player) -> Player:
         else:
             last_turn = False
 
-        render_turn(player,turn)
+        render_turn(player)
         #card play loop
         while turn_running:
             render_hand(player)
@@ -489,7 +533,7 @@ def load_dan_cards_csv(directory: str) -> list[Card]:
 def render_hand(player: Player):
     """Prints out all relevant info per card play"""
     print("-"*15)
-    print(f" TARGET HEADING: {player.objective_number}")
+    print(f" TARGET HEADING: {player.target_number}")
     print(f"CURRENT HEADING: {player.current_number}")
     print("-"*15)
     # print hand 
@@ -500,7 +544,7 @@ def render_hand(player: Player):
             print(f"Position {i} : {card.alt_str()}")
 
 def render_shop_exit(player:Player):
-    print(f"starting new level... Target: {player.objective_number}. You recieve 10 more cargo!")
+    print(f"starting new level... Target: {player.target_number}. You recieve 10 more cargo!")
     print("-"*15)
 
 def render_turn(player: Player):
