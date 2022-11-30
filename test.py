@@ -20,5 +20,8 @@ def new_csv_reader(directory: str) -> list[Card]:
 
 csv_path = "Starter Deck.csv"
 a = new_csv_reader(csv_path)
+def hand_filepath(a):
+    return [i.get_filepath() for i in a]
 
-Image.open(a[0].filepath).show()
+print(hand_filepath(a))
+# Image.open(a[0].filepath).show()

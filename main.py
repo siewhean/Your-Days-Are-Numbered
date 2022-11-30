@@ -34,7 +34,7 @@ class Card:
         self.value: int = value
         self.usable: bool = True
 
-        self.filepath: str = filepath
+        self._filepath: str = filepath
 
         # find cost and function
         self.cost: int = self.value*self.cost_tiers[self.operation] if cost == None else cost
@@ -58,6 +58,9 @@ class Card:
     def _copy(self) -> Card:
         """returns a duplicate of the card"""
         return Card(self.operation, self.value, self.cost)
+
+    def get_filepath(self) -> str:
+        return self._filepath
 
 class Player:
     def __init__(self) -> None:
@@ -261,6 +264,10 @@ class Player:
     def read_hand(self) -> list[Card]:
         '''returns the hand of the player'''
         return self.hand
+
+    def read_hand_filepath(self) -> list[str]:
+        '''returns the filepath of cards in hand of the player'''
+        return [card.get_filepath() for card in self.hand]
 
     def read_turn_info(self) -> dict:
         """returns the level, turn, cargo, and cards left in tempdeck"""
@@ -519,7 +526,7 @@ def main_cmd():
 
 def load_dan_cards_csv(directory: str) -> list[Card]:
     """
-    csv headings: operation,value,cost
+    csv headings: operation,value,cost,filepath
     returns a list of card objects
     """
     with open(directory) as f:
@@ -527,11 +534,11 @@ def load_dan_cards_csv(directory: str) -> list[Card]:
         card_info: list[str] = f.read().split()[1:]
         cards = []
         for i in card_info:
-            card_operation, card_value, card_cost = tuple(i.split(sep=","))
+            card_operation, card_value, card_cost, filepath = tuple(i.split(sep=","))
             if card_cost == '':
-                new_card = Card(card_operation, int(card_value))
+                new_card = Card(card_operation, int(card_value), filepath)
             else:
-                new_card = Card(card_operation, int(card_value), int(card_cost)) 
+                new_card = Card(card_operation, int(card_value), filepath, int(card_cost)) 
             cards.append(new_card)
     return cards
 
