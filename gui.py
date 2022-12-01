@@ -56,6 +56,9 @@ def level_number():
 def show_frame(frame):
     if frame == main_menu:
         main_play_button()
+    if frame == end_screen:
+        # reroll death message
+        Death_message.config(text=random.choice(Death_list))
     frame.tkraise()
 
 ###################################################### Variables ######################################################
