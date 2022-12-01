@@ -38,7 +38,6 @@ def create_player():
 
 def shop():
     root.destroy()
-    import shop_screen
 
 def clicked(cards, index):
     print("Index" + str(index))
@@ -52,10 +51,11 @@ def next_turn(cards):
 def level_number():
     number = "placeholder" #INSERT LEVEL NUMBER HERE
     return number
+player = Player
 
-def show_frame(frame):
+def show_frame(frame, player):
     if frame == main_menu:
-        main_play_button()
+        player = main_play_button()
     frame.tkraise()
 
 ###################################################### Variables ######################################################
@@ -115,7 +115,7 @@ Title.pack(fill='both', expand=True)
 ################################################## Insert Play Button ##################################################
 Play_Button = tk.Button(main_menu, text="PLAY", font=("LoRes 9 Plus OT Wide", 24), fg="white", bg="black",
                         borderwidth=10, highlightbackground="white",
-                        command=lambda: show_frame(game_screen))
+                        command=lambda: show_frame(game_screen, player))
 Play_Button.pack()
 
 ##################################################### GAME SCREEN #####################################################
@@ -174,15 +174,15 @@ deck_button_frame.place(x=260 + (game_screen_card_padx * 5), y=390 + game_screen
 
 #################################################### Create Buttons ####################################################
 game_screen_cards[0] = tk.Button(deck_button_frame, text="Card 1", font=("LoRes 9 Plus OT Wide", 18), padx=game_screen_card_padx, pady=60,
-                   command=lambda: clicked(game_screen_cards[0], 1))
+                   command=lambda: card_button(player, 0))
 game_screen_cards[0].grid(row=0, column=0, padx=10)
 
 game_screen_cards[1] = tk.Button(deck_button_frame, text="Card 2", font=("LoRes 9 Plus OT Wide", 18), padx=game_screen_card_padx, pady=60,
-                    command=lambda: clicked(game_screen_cards[1], 2))
+                    command=lambda: card_button(player, 1))
 game_screen_cards[1].grid(row=0, column=1, padx=10)
 
 game_screen_cards[2] = tk.Button(deck_button_frame, text="Card 3", font=("LoRes 9 Plus OT Wide", 18), padx=game_screen_card_padx, pady=60,
-                   command=lambda: clicked(game_screen_cards[2], 3))
+                   command=lambda: card_button(player, 2))
 game_screen_cards[2].grid(row=0, column=2, padx=10)
 
 game_screen_cards[3] = tk.Button(deck_button_frame, text="Card 4", font=("LoRes 9 Plus OT Wide", 18), padx=game_screen_card_padx, pady=60,
@@ -208,7 +208,7 @@ concede_button_frame.configure(bg="black")
 concede_button_frame.grid(row=0, column=1)
 
 Concede = tk.Button(concede_button_frame, text="CONCEDE", font=("LoRes 9 Plus OT Wide", 14), fg="white", bg="black",
-                      command=lambda: show_frame(end_screen))
+                      command=lambda: show_frame(end_screen, player))
 Concede.grid(row=0, column=1, pady=(20, 0))
 
 ######################################################### SHOP #########################################################
@@ -314,9 +314,9 @@ button_frame.pack(pady=65)
 
 Main_Menu_Button = tk.Button(button_frame, text="Try Again?", font=("LoRes 9 Plus OT Wide", 24), fg="white", bg="black",
                         borderwidth=10, highlightbackground="white",
-                        command=lambda: show_frame(main_menu))
+                        command=lambda: show_frame(main_menu, player))
 Main_Menu_Button.grid(row=1, column=0, padx=50)
 
-show_frame(main_menu)
+show_frame(main_menu, player)
 
 root.mainloop()
