@@ -226,7 +226,7 @@ def pass_turn(player:Player):
     if player.turn_state == "win":
         initiate_shop(player)
     elif player.turn_state == "dead":
-        show_frame(end_screen, player)
+        initiate_death(player)
     else:
         update_hand(player, stall=True)
         update_turn_info(player)
@@ -287,7 +287,7 @@ concede_button_frame.configure(bg="black")
 concede_button_frame.grid(row=0, column=1)
 
 Concede = tk.Button(concede_button_frame, text="CONCEDE", font=("LoRes 9 Plus OT Wide", 14), fg="white", bg= "black",
-                        command=lambda: show_frame(end_screen, player))
+                        command=lambda: initiate_death(player))
 Concede.grid(row=0, column=1, pady=(20, 0))
 
 ######################################################### SHOP #########################################################
@@ -384,7 +384,11 @@ def end_shopping(player:Player):
 
 def initiate_death(player:Player) -> None:
     '''kills you cutely'''
-    pass
+    Death_message.config(text=random.choice(Death_list))
+    Level_score.config(text= F"YOU LOST ON: LEVEL {player.read_level()}")
+    print("deleted player")
+    end_screen.tkraise()
+    del player
 
 ##################################################### Insert Title #####################################################
 Title = tk.Label(end_screen, text='GAME OVER', font=("LoRes 9 Plus OT Wide", 60), fg="white", bg="black",
