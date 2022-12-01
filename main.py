@@ -57,7 +57,7 @@ class Card:
 
     def _copy(self) -> Card:
         """returns a duplicate of the card"""
-        return Card(self.operation, self.value, self.cost)
+        return Card(self.operation, self.value, self.get_filepath(), self.cost)
 
     def get_filepath(self) -> str:
         return self._filepath
@@ -281,7 +281,8 @@ class Player:
     def read_shop_info(self) -> dict:
         '''returns the shop choices, cargo, and cards in maindeck'''
         return {
-            "choices"    : self.shop_choices,
+            "choices"    : [card.get_filepath() for card in self.shop_choices],
+            "costs"      : [card.cost for card in self.shop_choices],
             "cargo"      : self.cargo,
             "deck length": len(self.main_deck)
         }
@@ -299,7 +300,7 @@ def turn_start(player:Player):
     player.draw_hand()
     if player.check_last_turn():
         # tkinter.messagebox
-        messagebox.showinfo("Warning", "This is your final turn!")
+        messagebox.showwarning("Warning", "This is your final turn!")
         print("This is your final turn!")
         print("-"*15)
 
@@ -319,14 +320,9 @@ def card_button(player: Player, button_index: int):
     """called when card button is clicked in play phase"""
     try:
         player.play_card(button_index)
+        print(f"card played, {button_index} selected")
     except:
         messagebox.showinfo("Invalid!", "you already played this card.")
-    if player.is_win():
-        # tkinter.messagebox
-        messagebox.showinfo('Level Clear!', 'End your turn to proceed to the card shop.')
-        # consider: change the next turn button to "to shop"
-        print("-"*15)
-        print("you win! end your turn to proceed to shop.")
 
 def next_turn_button(player: Player):
     """called when next turn is clicked"""
@@ -343,12 +339,7 @@ def next_turn_button(player: Player):
 
 def buy_button(player: Player, button_index: int):
     """called when card is clicked in shop phase"""
-    try:
-        player.buy_card(button_index)
-    except:
-        # tkinter.messagebox
-        messagebox.showinfo("Insufficient Cargo!", "This card is too expensive!")
-        print("Card is too expensive!")
+    player.buy_card(button_index)
 
 def done_shopping(player: Player):
     """called when player is done shopping"""
@@ -537,9 +528,9 @@ def load_dan_cards_csv(directory: str) -> list[Card]:
         for i in card_info:
             card_operation, card_value, card_cost, filepath = tuple(i.split(sep=","))
             if card_cost == '':
-                new_card = Card(card_operation, int(card_value), filepath)
+                new_card = Card(card_operation, int(card_value), filepath=filepath)
             else:
-                new_card = Card(card_operation, int(card_value), filepath, int(card_cost))
+                new_card = Card(card_operation, int(card_value), filepath=filepath, cost= int(card_cost))
             cards.append(new_card)
     return cards
 
