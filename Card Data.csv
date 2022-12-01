@@ -1,4 +1,4 @@
-operator,value,cost
+operator,value,cost,filepath
 +,1,,assets/Cards/+1.png
 +,2,,assets/Cards/+2.png
 +,3,,assets/Cards/+3.png
