@@ -55,7 +55,10 @@ player = Player
 
 def show_frame(frame, player):
     if frame == main_menu:
-        player = main_play_button()
+        main_play_button()
+    if frame == end_screen:
+        # reroll death message
+        Death_message.config(text=random.choice(Death_list))
     frame.tkraise()
 
 ###################################################### Variables ######################################################
