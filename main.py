@@ -211,7 +211,6 @@ class Player:
         self.cargo -= card.cost
         self.main_deck.append(card._copy())
         self.shop_choices[index].void()
-        print(f"{card.alt_str()} added to deck!")
 
     def populate_shop(self) -> None:
         """fills shop with items based on how much cargo player has"""
@@ -307,28 +306,12 @@ class Player:
         return maindeck_str
 
 ############################################# BUTTON INPUTS ##########################################
-def turn_start(player:Player):
-    """called when turn starts"""
-    player.draw_hand()
-    if player.check_last_turn():
-        # tkinter.messagebox
-        messagebox.showwarning("Warning", "This is your final turn!")
-        print("This is your final turn!")
-        print("-"*15)
 
 def start_level(player: Player):
     """called when each level starts"""
     player.reset_deck()
     player.to_game()
-    turn_start(player)
-
-def card_button(player: Player, button_index: int):
-    """called when card button is clicked in play phase"""
-    try:
-        player.play_card(button_index)
-        print(f"card played, {button_index} selected")
-    except:
-        messagebox.showinfo("Invalid!", "you already played this card.")
+    player.draw_hand()
 
 def create_player() -> Player:
     """creates a player with the starting hand"""
