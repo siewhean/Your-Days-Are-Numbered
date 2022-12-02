@@ -29,8 +29,6 @@ font = loadfont("LoRes.ttf")
 root = tk.Tk()
 root.title("YOUR DAYS ARE NUMBERED")
 root.configure(background='black')
-# panel = tk.Label(root, bg="black")
-# panel.pack(side="bottom", fill="both", expand="yes")
 # Maximise Window on Run
 root.state('zoomed')
 
@@ -39,26 +37,15 @@ root.state('zoomed')
 player:Player = None
 
 main_menu_y_padding_from_top_window = 100
-main_menu_deck_box_height = 150
-main_menu_font_size_offset = 5
-main_menu_back_button_height = 50
-main_menu_back_button_y_offset = 10
 
 game_screen_y_padding_from_top_window = 30
 game_screen_deck_box_width = 900
 game_screen_deck_box_height = 150
 game_screen_font_size_offset = 5
-game_screen_home_button_height = 50
-game_screen_home_button_y_offset = 10
-game_screen_card_padx = 8
 game_screen_cards:list[tk.Button] = ["cards_1", "cards2", "cards_3", "cards_4", "cards_5"]
 _game_screen_cards_images:list[tk.PhotoImage] = ["cards_1", "cards2", "cards_3", "cards_4", "cards_5"]
 
-shop_screen_y_padding_from_top_window = 0
 shop_screen_deck_box_height = 180
-shop_screen_font_size_offset = 5
-shop_screen_back_button_height = 50
-shop_screen_back_button_y_offset = 10
 shop_screen_card_padx = 8
 shop_screen_cards_button: list[tk.Button] = ["cards_1", "cards2", "cards_3", "cards_4", "cards_5"]
 shop_screen_cards_cost: list[tk.Button] = ["cards_cost_1", "cards_cost_2", "cards_cost_3", "cards_cost_4", "cards_cost_5"]
@@ -105,7 +92,6 @@ Play_Button.pack()
 def start_game() -> None:
     '''initiates a new player for a new game'''
     globals()["player"]:Player = create_player()
-    print("player created") # debug
     start_level(player)
     initiate_level(player)
 
@@ -143,7 +129,6 @@ def update_hand(player:Player, stall:bool=False) -> None:
         wait_here(450)
         Next_Turn.config(state="normal")
     card_path_str = player.read_hand_filepath()
-    print(card_path_str)
     for i, string in enumerate(card_path_str):
         _game_screen_cards_images[i] = tk.PhotoImage(file= string)
         game_screen_cards[i].config(image= _game_screen_cards_images[i], state= "normal")
@@ -151,14 +136,11 @@ def update_hand(player:Player, stall:bool=False) -> None:
 def initiate_level(player:Player) -> None:
     """updates all values on game start"""
     update_turn_info(player, new_level= True)
-    print("turn info loaded...")
     update_headings(player, new_level= True)
-    print("headings loaded...")
     update_hand(player)
-    print("hand loaded...")
     Concede.config(state= "normal")
     Next_Turn.config(text= "NEXT TURN")
-    win_msg.config(fg= 'black')
+    pop_up_msg.config(fg= 'black')
     game_screen.tkraise()
 
 ############################################# Insert Target Heading Value #############################################
@@ -215,7 +197,10 @@ def pass_turn(player:Player):
         player.to_deathscreen()
         initiate_death(player)
     else:
-        turn_start(player)
+        player.draw_hand()
+        if player.check_last_turn():
+            pop_up_msg.config(fg="black", text= "FINAL TURN")
+            blink_pop_up(7)
         update_hand(player, stall=True)
         update_turn_info(player)
         
@@ -238,7 +223,7 @@ card_back = tk.PhotoImage(file= "assets/Cards/back.png")
 
 def on_card_play(player:Player, index:int) -> None:
     """called on card click"""
-    card_button(player, index)
+    player.play_card(index)
     game_screen_cards[index].config(state="disabled", image=card_back)
     update_headings(player)
     if player.is_win():
@@ -246,12 +231,8 @@ def on_card_play(player:Player, index:int) -> None:
             game_screen_cards[i].config(state= "disabled")
         Concede.config(state= "disabled")
         Next_Turn.config(text= "EXIT LEVEL")
-        blink_win(7)
-        # tkinter.messagebox
-        # messagebox.showinfo('Level Clear!', 'End your turn to proceed to the card shop.')
-        # print("-"*15)
-        # print("you win! end your turn to proceed to shop.")
-
+        pop_up_msg.config(fg="black", text= "LEVEL CLEAR!")
+        blink_pop_up(7)
 
 card_play_dict:dict = {
     0: lambda: on_card_play(player, 0),
@@ -287,32 +268,28 @@ Concede.grid(row=0, column=1, pady=(20, 0))
 
 ################################################ Insert Win Message ################################################
 
-win_msg = tk.Label(game_screen, text="LEVEL CLEAR!", font=("LoRes 9 Plus OT Wide", 20), fg="black", bg="black")
-win_msg.pack()
+pop_up_msg = tk.Label(game_screen, text="LEVEL CLEAR!", font=("LoRes 9 Plus OT Wide", 20), fg="black", bg="black")
+pop_up_msg.pack()
 
-def blink_win(times:int) -> None:
+def blink_pop_up(times:int) -> None:
     """displays and blinks the win message"""
     if times <= 0:
-        win_msg.config(fg= "white")
+        pop_up_msg.config(fg= "white")
     else:
-        current_color = win_msg.cget("fg")
+        current_color = pop_up_msg.cget("fg")
         next_color = "black" if current_color == "white" else "white"
-        win_msg.config(fg=next_color)
-        root.after(120, lambda: blink_win(times - 1))
+        pop_up_msg.config(fg=next_color)
+        root.after(120, lambda: blink_pop_up(times - 1))
 
 ######################################################### SHOP #########################################################
 
 def initiate_shop(player:Player) -> None:
     '''called when shop is opened'''
     shop_dict = player.read_shop_info()
-
     # shop is already populated by next turn button
-    # get paths for shop cards
-    card_path_str = shop_dict["choices"]
+    card_path_str = shop_dict["choices"] # get paths for shop cards
     card_costs = shop_dict["costs"]
-    print(card_path_str)
     for i, string in enumerate(card_path_str):
-        #tkinter only can access global variables
         _shop_screen_cards_images[i] = tk.PhotoImage(file= string)
         shop_screen_cards_button[i].config(image= _shop_screen_cards_images[i], state= "normal")
         shop_screen_cards_cost_data[i] = card_costs[i]
@@ -339,7 +316,6 @@ def update_card_clickable(player:Player) -> None:
 ################################################### Create Deck Box ###################################################
 shop_deck_box = tk.Canvas(shop_screen, width=900, height=shop_screen_deck_box_height, bd=30, bg='black', highlightthickness=5,
                      highlightbackground="white")
-# deck_box.pack(x=200, y=140 - deck_box_height + y_padding_from_top_window + (2 * font_size_offset) + back_button_height + (3 * back_button_y_offset))
 shop_deck_box.pack(pady=(60, 10))
 
 shop_button_frame = tk.Frame(shop_deck_box, highlightthickness=5, highlightbackground="white")
@@ -421,7 +397,6 @@ def initiate_death(player:Player) -> None:
     '''kills you cutely'''
     Death_message.config(text=random.choice(Death_list))
     Level_score.config(text= F"YOU LOST ON: LEVEL {player.read_level()}")
-    print("deleted player")
     end_screen.tkraise()
     del player
 
@@ -469,7 +444,7 @@ def initiate_main():
     '''opens the main menu'''
     main_menu.tkraise()
 
-
 ################################################## Boot Up Game ########################################################
+
 initiate_main()
 root.mainloop()
