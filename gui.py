@@ -78,7 +78,7 @@ panel.pack(side="bottom", fill="both", expand="yes")
 ###################################################### MAIN MENU ######################################################
 
 ##################################################### Insert Title #####################################################
-Title_img = tk.PhotoImage(file= "assets/Title.png").subsample(2)
+Title_img = tk.PhotoImage(file= "assets/Title_2.png")
 
 Title = tk.Label(main_menu, image= Title_img, fg="white", bg="black",
                  padx=-10)
@@ -87,9 +87,9 @@ Title.pack(fill='both', expand=True)
 
 ################################################## Insert Play Button ##################################################
 Play_Button = tk.Button(main_menu, text="PLAY", font=("LoRes 9 Plus OT Wide", 28), fg="white", bg="black",
-                        borderwidth=10, highlightbackground="white", width=15,
+                        borderwidth=10, highlightbackground="white", width=10,
                         command=lambda: start_game())
-Play_Button.pack()
+Play_Button.pack(pady= (50,0))
 
 def start_game() -> None:
     '''initiates a new player for a new game'''
@@ -120,6 +120,7 @@ def update_turn_info(player:Player, new_level:bool = False) -> None:
 
 def wait_here(duration:int):
     '''stalls the window for <x> milliseconds'''
+    global root
     var = tk.IntVar() # dummy variable
     root.after(duration, lambda: var.set(value=1)) # update dummy variable after duration
     root.wait_variable(var) # wait for dummy variable to update
