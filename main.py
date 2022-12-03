@@ -82,33 +82,11 @@ class Player:
         self.level: int = 1
         self.turn: int = 1
 
-        self.state: str = "game"
-
         ## Shop Variables
         self.shop_choices: list[Card] = []
         self.shop_size: int = 5
 
     # play phase functions
-
-    def to_game(self) -> None:
-        """denotes game mode == game"""
-        self.state = "game"
-
-    def to_shop(self) -> None:
-        """denotes game mode == shop"""
-        self.state = "shop"
-
-    def to_deathscreen(self) -> None:
-        """denotes game mode == death"""
-        self.state = "death"
-
-    def is_game(self) -> bool:
-        """checks game mode == game"""
-        return self.state == "game"
-
-    def is_shop(self) -> bool:
-        """checks game mode == shop"""
-        return self.state == "shop"
 
     def create_temp_deck(self) -> None:
         """makes copies of all cards from main_deck into temp_deck."""
@@ -310,7 +288,6 @@ class Player:
 def start_level(player: Player):
     """called when each level starts"""
     player.reset_deck()
-    player.to_game()
     player.draw_hand()
 
 def create_player() -> Player:

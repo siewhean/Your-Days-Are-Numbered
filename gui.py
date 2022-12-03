@@ -10,6 +10,7 @@ from main import *
 
 ##################################################### Import Font #####################################################
 def loadfont(fontpath, private=True, enumerable=True):
+    '''loads the desired font for use in the game screens'''
     if isinstance(fontpath, bytes):
         pathbuf = create_string_buffer(fontpath)
         AddFontResourceEx = windll.gdi32.AddFontResourceExA
@@ -28,6 +29,7 @@ def loadfont(fontpath, private=True, enumerable=True):
 font = loadfont("LoRes.ttf")
 root = tk.Tk()
 root.title("YOUR DAYS ARE NUMBERED")
+root.iconbitmap("assets\icon_black.ico")
 root.configure(background='black')
 # Maximise Window on Run
 root.state('zoomed')
@@ -84,14 +86,15 @@ Title.pack(pady=(main_menu_y_padding_from_top_window, 0))
 Title.pack(fill='both', expand=True)
 
 ################################################## Insert Play Button ##################################################
-Play_Button = tk.Button(main_menu, text="PLAY", font=("LoRes 9 Plus OT Wide", 24), fg="white", bg="black",
-                        borderwidth=10, highlightbackground="white",
+Play_Button = tk.Button(main_menu, text="PLAY", font=("LoRes 9 Plus OT Wide", 28), fg="white", bg="black",
+                        borderwidth=10, highlightbackground="white", width=15,
                         command=lambda: start_game())
 Play_Button.pack()
 
 def start_game() -> None:
     '''initiates a new player for a new game'''
-    globals()["player"]:Player = create_player()
+    global player
+    player = create_player()
     start_level(player)
     initiate_level(player)
 
@@ -99,6 +102,7 @@ def start_game() -> None:
 
 def update_headings(player:Player, new_level:bool = False) -> None:
     """updates the target and current headings"""
+    global Target_Heading, Current_Heading
     head_dict = player.read_headings()
     if new_level:
         Target_Heading.config(text=str(head_dict["target"]))
@@ -106,6 +110,7 @@ def update_headings(player:Player, new_level:bool = False) -> None:
 
 def update_turn_info(player:Player, new_level:bool = False) -> None:
     """updates the turn, cargo, level, and cards left"""
+    global Level, Turn, Cargo_Left, Cards_Left
     turn_dict = player.read_turn_info()
     if new_level:
         Level.config(text=str(f'LEVEL: {turn_dict["level"]}'))
@@ -120,11 +125,12 @@ def wait_here(duration:int):
     root.wait_variable(var) # wait for dummy variable to update
     del var
 
-def update_hand(player:Player, stall:bool=False) -> None:
+def update_hand(player:Player, animate:bool=False) -> None:
     '''updates the filepaths for the cards in hand'''
-    for i in range(len(game_screen_cards)):
-        game_screen_cards[i].config(state="disabled", image=card_back)
-    if stall:
+    global game_screen_cards, Next_Turn, _game_screen_cards_images
+    if animate:
+        for i in range(len(game_screen_cards)):
+            game_screen_cards[i].config(state="disabled", image=card_back)
         Next_Turn.config(state="disable")
         wait_here(450)
         Next_Turn.config(state="normal")
@@ -135,18 +141,20 @@ def update_hand(player:Player, stall:bool=False) -> None:
 
 def initiate_level(player:Player) -> None:
     """updates all values on game start"""
+    global Concede, Next_Turn, Pop_up_msg, game_screen, root
     update_turn_info(player, new_level= True)
     update_headings(player, new_level= True)
     update_hand(player)
     Concede.config(state= "normal")
     Next_Turn.config(text= "NEXT TURN")
-    pop_up_msg.config(fg= 'black')
-    game_screen.tkraise()
+    Pop_up_msg.config(fg= 'black')
+    root.after(50, game_screen.tkraise)
 
 ############################################# Insert Target Heading Value #############################################
 Target_Heading_Title = tk.Label(game_screen, text='TARGET\nHEADING', font=("LoRes 9 Plus OT Wide", 14), fg="white", bg="black",
                                 padx=-10)
 Target_Heading_Title.pack(pady=(game_screen_y_padding_from_top_window, 0))
+
 Target_Heading = tk.Label(game_screen, text=str(99), font=("LoRes 9 Plus OT Wide", 40 + game_screen_font_size_offset), fg="white",
                           bg="black")
 Target_Heading.pack()
@@ -187,24 +195,19 @@ Next_Turn.grid(row=0, column=0)
 def pass_turn(player:Player):
     """called on clicking next turn"""
     player.end_turn()
-
     if player.turn_state == "win":
         player.populate_shop()
-        player.to_shop()
         initiate_shop(player)
     elif player.turn_state == "dead":
         player.turn_state = "dead"
-        player.to_deathscreen()
         initiate_death(player)
     else:
         player.draw_hand()
         if player.check_last_turn():
-            pop_up_msg.config(fg="black", text= "FINAL TURN")
-            blink_pop_up(7)
-        update_hand(player, stall=True)
+            show_pop_up("FINAL TURN")
+        update_hand(player, animate=True)
         update_turn_info(player)
         
-
 ################################################### Create Deck Box ###################################################
 deck_box = tk.Canvas(game_screen, width=game_screen_deck_box_width, height=game_screen_deck_box_height, bd=30, bg='black')
 deck_box.pack(pady=(10, 0))
@@ -223,6 +226,7 @@ card_back = tk.PhotoImage(file= "assets/Cards/back.png")
 
 def on_card_play(player:Player, index:int) -> None:
     """called on card click"""
+    global Concede, Next_Turn, game_screen_cards
     player.play_card(index)
     game_screen_cards[index].config(state="disabled", image=card_back)
     update_headings(player)
@@ -231,8 +235,7 @@ def on_card_play(player:Player, index:int) -> None:
             game_screen_cards[i].config(state= "disabled")
         Concede.config(state= "disabled")
         Next_Turn.config(text= "TO SHOP >")
-        pop_up_msg.config(fg="black", text= "LEVEL CLEAR!")
-        blink_pop_up(7)
+        show_pop_up("LEVEL CLEAR!")
 
 card_play_dict:dict = {
     0: lambda: on_card_play(player, 0),
@@ -267,24 +270,32 @@ Concede = tk.Button(concede_button_frame, text="CONCEDE", font=("LoRes 9 Plus OT
 Concede.grid(row=0, column=1, pady=(20, 0))
 
 ################################################ Insert Win Message ################################################
+Pop_up_msg = tk.Label(game_screen, text="", font=("LoRes 9 Plus OT Wide", 20), fg="black", bg="black")
+Pop_up_msg.pack()
 
-pop_up_msg = tk.Label(game_screen, text="LEVEL CLEAR!", font=("LoRes 9 Plus OT Wide", 20), fg="black", bg="black")
-pop_up_msg.pack()
+def show_pop_up(msg:str):
+    '''sets and blinks the pop-up message'''
+    global Pop_up_msg, root
+    Pop_up_msg.config(fg="black", text= msg)
+    blink_pop_up(7)
+    root.after(5000, lambda: Pop_up_msg.config(fg="black", text= ""))
 
 def blink_pop_up(times:int) -> None:
-    """displays and blinks the win message"""
+    """blinks the pop-up message"""
+    global Pop_up_msg, root
     if times <= 0:
-        pop_up_msg.config(fg= "white")
+        Pop_up_msg.config(fg= "white")
     else:
-        current_color = pop_up_msg.cget("fg")
+        current_color = Pop_up_msg.cget("fg")
         next_color = "black" if current_color == "white" else "white"
-        pop_up_msg.config(fg=next_color)
+        Pop_up_msg.config(fg=next_color)
         root.after(120, lambda: blink_pop_up(times - 1))
 
 ######################################################### SHOP #########################################################
-
 def initiate_shop(player:Player) -> None:
     '''called when shop is opened'''
+    global _shop_screen_cards_images, shop_screen_cards_button, shop_screen_cards_cost_data
+    global shop_screen_cards_cost, root, shop_screen
     shop_dict = player.read_shop_info()
     # shop is already populated by next turn button
     card_path_str = shop_dict["choices"] # get paths for shop cards
@@ -294,29 +305,48 @@ def initiate_shop(player:Player) -> None:
         shop_screen_cards_button[i].config(image= _shop_screen_cards_images[i], state= "normal")
         shop_screen_cards_cost_data[i] = card_costs[i]
         shop_screen_cards_cost[i].config(text= f"COST:{card_costs[i]}")
+    random_planet_message()
     update_cargo(player)
     update_deck_contents(player)
-    shop_screen.tkraise()
+    root.after(50, shop_screen.tkraise)
 
 def update_cargo(player:Player)-> None:
     '''called to update player cargo'''
-    shop_cargo_left.config(text= f"CARGO LEFT: {player.cargo}")
+    global Shop_cargo_left
+    Shop_cargo_left.config(text= f"CARGO LEFT: {player.cargo}")
 
 def update_deck_contents(player:Player) -> None:
     '''called to update the deck readout'''
-    txt_deck.config(text= f"YOUR DECK CONTAINS:\n{player.read_deck_qty()}")
-    update_card_clickable(player)
+    global Txt_deck
+    Txt_deck.config(text= f"YOUR DECK CONTAINS:\n{player.read_deck_qty()}")
+    update_buyable(player)
 
-def update_card_clickable(player:Player) -> None:
+def update_buyable(player:Player) -> None:
     '''called to update card clickability in the shop'''
+    global shop_screen_cards_cost_data, shop_screen_cards_button
     for i, cost in enumerate(shop_screen_cards_cost_data):
         if cost > player.cargo:
             shop_screen_cards_button[i].config(state="disabled")
 
+############################################### Create Planet Message ##################################################
+
+def random_planet_message():
+    '''randomises the planet you arrive on'''
+    global Planet_message
+    systems:list[str] = ['jenso', 'danel', 'eeso', 'saiza', 'sewhen', 'kael', 'tellar', 'nimbus', 'altair', 'alderaan',
+                         'coruscant', 'xaryxia', 'bespin', 'gallifrey', 'mondas', 'arrakis', 'krypton', 'xandar',
+                         'vulcan', 'andromeda', 'artemis-tau']
+    random_planet:str = random.choice(systems) + "-" + str(random.choice(range(1,100)))
+    Planet_message.config(text= f"YOU HAVE REACHED {random_planet.upper()}")
+
+Planet_message = tk.Label(shop_screen, text="YOU HAVE REACHED THE NEXT PLANET!", font=("LoRes 9 Plus OT Wide", 24), fg="white", bg="black",
+                 padx=-10)
+Planet_message.pack(pady=(25,0))
+
 ################################################### Create Deck Box ###################################################
 shop_deck_box = tk.Canvas(shop_screen, width=900, height=shop_screen_deck_box_height, bd=30, bg='black', highlightthickness=5,
                      highlightbackground="white")
-shop_deck_box.pack(pady=(60, 10))
+shop_deck_box.pack(pady=(15,10))
 
 shop_button_frame = tk.Frame(shop_deck_box, highlightthickness=5, highlightbackground="white")
 shop_button_frame.configure(bg="black")
@@ -324,18 +354,22 @@ shop_button_frame.grid(row=0, column=0, sticky="ew")
 shop_button_frame.grid_columnconfigure(0, minsize=110)
 shop_button_frame.grid_columnconfigure(2, minsize=110)
 
+shop_header = tk.Label(shop_button_frame, text="THE CARD SHOP", font=("LoRes 9 Plus OT Wide", 20), fg="white", bg="black")
+shop_header.grid(row=0, column=1, pady=(5,0))
+
 shop_card_anchor:tk.Frame = tk.Frame(shop_button_frame, bg= "black")
-shop_card_anchor.grid(row=0, column=1, sticky="ew")
+shop_card_anchor.grid(row=1, column=1, sticky="ew")
 
 #################################################### Create Buttons ####################################################
 description_button_frame = tk.Frame(shop_screen)
 description_button_frame.configure(bg="black")
 description_button_frame.pack()
 
-description_button_frame.grid_rowconfigure(2, minsize= 150)
+description_button_frame.grid_rowconfigure(2, minsize= 125)
 
 def on_card_buy(player:Player, index:int) -> None:
     '''called when card is bought'''
+    global shop_screen_cards_button
     try:
         player.buy_card(index)
     except:
@@ -343,7 +377,7 @@ def on_card_buy(player:Player, index:int) -> None:
         messagebox.showerror("Insufficient Cargo!", "This card is too expensive!")
         return
     shop_screen_cards_button[index].config(state="disabled", image=card_back)
-    update_card_clickable(player)
+    update_buyable(player)
     update_cargo(player)
     update_deck_contents(player)
 
@@ -358,7 +392,7 @@ card_buy_dict:dict = {
 for i in range(len(shop_screen_cards_button)):
     shop_screen_cards_button[i]:tk.Button = tk.Button(shop_card_anchor, image= card_back, width=125, height=175, borderwidth=0, bg='black',
                         activebackground= "black", padx = shop_screen_card_padx, pady=60, command = card_buy_dict[i])
-    shop_screen_cards_button[i].grid(row=0, column=i, padx=10, pady=(15,0))
+    shop_screen_cards_button[i].grid(row=0, column=i, padx=10, pady=(10,0))
 
 ##################################################### Insert Cost #####################################################
 for i in range(5):
@@ -367,16 +401,16 @@ for i in range(5):
     shop_screen_cards_cost[i].grid(row=1, column=i, padx=36, pady=10)
 
 ################################################## Insert Cargo Value ##################################################
-shop_cargo_left = tk.Label(description_button_frame, text="CARGO LEFT: " + "0",
+Shop_cargo_left = tk.Label(description_button_frame, text="CARGO LEFT: " + "0",
                       font=("LoRes 9 Plus OT Wide", 16), fg="white", bg="black")
-shop_cargo_left.grid(row=1, column=2, pady=(10,0))
+Shop_cargo_left.grid(row=1, column=2, pady=(5,0))
 
 ############################################### Insert Deck Quantities #################################################
 placeholder_txt_deck:str = "1× [+1]   1× [+2]   1× [+3]   1× [+4]   1× [+5]   1× [+6]   1× [+7]   1× [+8]   1× [+9]"
 
-txt_deck = tk.Label(description_button_frame, text= placeholder_txt_deck,
+Txt_deck = tk.Label(description_button_frame, text= placeholder_txt_deck,
                       font=("LoRes 9 Plus OT Wide", 14), fg="#999999", bg="black")
-txt_deck.grid(row=2, column=2, pady=(10,0))
+Txt_deck.grid(row=2, column=2, pady=0)
 
 ################################################## Insert Next Button ##################################################
 Next_Level = tk.Button(shop_screen, text="NEXT LEVEL", font=("LoRes 9 Plus OT Wide", 24), fg="white", bg="black", width=10, bd="15", highlightbackground="white",
@@ -388,17 +422,18 @@ def end_shopping(player:Player):
     start_level(player)
     initiate_level(player)
 
-reward = tk.Label(shop_screen, text="+10 CARGO", font=("LoRes 9 Plus OT Wide", 14), fg="white", bg="black")
-reward.pack(pady=2)
+Reward = tk.Label(shop_screen, text="+10 CARGO", font=("LoRes 9 Plus OT Wide", 14), fg="white", bg="black")
+Reward.pack(pady=2)
 
 ###################################################### END SCREEN ######################################################
 
 def initiate_death(player:Player) -> None:
     '''kills you cutely'''
+    global Death_message, Level_score, root, end_screen
     Death_message.config(text=random.choice(Death_list))
     Level_score.config(text= F"YOU LOST ON: LEVEL {player.read_level()}")
-    end_screen.tkraise()
-    del player
+    root.after(50, end_screen.tkraise)
+    player = None
 
 ##################################################### Insert Title #####################################################
 Title = tk.Label(end_screen, text='GAME OVER', font=("LoRes 9 Plus OT Wide", 60), fg="white", bg="black",
@@ -442,7 +477,8 @@ Main_Menu_Button.grid(row=1, column=0, padx=50)
 
 def initiate_main():
     '''opens the main menu'''
-    main_menu.tkraise()
+    global root, main_menu
+    root.after(50, main_menu.tkraise)
 
 ################################################## Boot Up Game ########################################################
 
