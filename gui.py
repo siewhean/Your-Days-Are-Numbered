@@ -180,7 +180,7 @@ Cargo_Left.grid(row=0, column=2, padx=(0, game_screen_deck_box_width/5-15), pady
 next_button_frame = tk.Frame(description_button_frame)
 next_button_frame.grid(row=0, column=3)
 
-Next_Turn = tk.Button(next_button_frame, text="NEXT TURN", font=("LoRes 9 Plus OT Wide", 14), fg="white", bg="black",
+Next_Turn = tk.Button(next_button_frame, text="NEXT TURN", font=("LoRes 9 Plus OT Wide", 14), fg="white", bg="black", width=10, 
                       command=lambda: pass_turn(player))
 Next_Turn.grid(row=0, column=0)
 
@@ -230,7 +230,7 @@ def on_card_play(player:Player, index:int) -> None:
         for i in range(len(game_screen_cards)):
             game_screen_cards[i].config(state= "disabled")
         Concede.config(state= "disabled")
-        Next_Turn.config(text= "EXIT LEVEL")
+        Next_Turn.config(text= "TO SHOP >")
         pop_up_msg.config(fg="black", text= "LEVEL CLEAR!")
         blink_pop_up(7)
 
@@ -435,7 +435,7 @@ button_frame = tk.Frame(end_screen)
 button_frame.configure(bg="black")
 button_frame.pack(pady=65)
 
-Main_Menu_Button = tk.Button(button_frame, text="Try Again?", font=("LoRes 9 Plus OT Wide", 24), fg="white", bg="black",
+Main_Menu_Button = tk.Button(button_frame, text="Try Again?".upper(), font=("LoRes 9 Plus OT Wide", 24), fg="white", bg="black",
                         borderwidth=10, highlightbackground="white",
                         command=lambda: initiate_main())
 Main_Menu_Button.grid(row=1, column=0, padx=50)
