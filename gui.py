@@ -31,24 +31,19 @@ root = tk.Tk()
 root.title("YOUR DAYS ARE NUMBERED")
 root.iconbitmap("assets\icon_black.ico")
 root.configure(background='black')
-# Maximise Window on Run
-root.state('zoomed')
+root.state('zoomed') # Maximise Window on Run
 
 ###################################################### Variables ######################################################
 
-player:Player = None
+player:Player = Player()
+player.reset_player()
 
-main_menu_y_padding_from_top_window = 100
-
-game_screen_y_padding_from_top_window = 30
 game_screen_deck_box_width = 900
 game_screen_deck_box_height = 150
 game_screen_font_size_offset = 5
 game_screen_cards:list[tk.Button] = ["cards_1", "cards2", "cards_3", "cards_4", "cards_5"]
 _game_screen_cards_images:list[tk.PhotoImage] = ["cards_1", "cards2", "cards_3", "cards_4", "cards_5"]
 
-shop_screen_deck_box_height = 180
-shop_screen_card_padx = 8
 shop_screen_cards_button: list[tk.Button] = ["cards_1", "cards2", "cards_3", "cards_4", "cards_5"]
 shop_screen_cards_cost: list[tk.Button] = ["cards_cost_1", "cards_cost_2", "cards_cost_3", "cards_cost_4", "cards_cost_5"]
 _shop_screen_cards_images:list[tk.PhotoImage] = ["cards_1", "cards2", "cards_3", "cards_4", "cards_5"]
@@ -82,20 +77,18 @@ Title_img = tk.PhotoImage(file= "assets/Title_2.png")
 
 Title = tk.Label(main_menu, image= Title_img, fg="white", bg="black",
                  padx=-10)
-Title.pack(pady=(main_menu_y_padding_from_top_window, 0))
+Title.pack(pady=(100, 0))
 Title.pack(fill='both', expand=True)
 
 ################################################## Insert Play Button ##################################################
 Play_Button = tk.Button(main_menu, text="PLAY", font=("LoRes 9 Plus OT Wide", 28), fg="white", bg="black",
                         borderwidth=10, highlightbackground="white", width=10,
-                        command=lambda: start_game())
+                        command=lambda: start_game(player))
 Play_Button.pack(pady= (50,0))
 
-def start_game() -> None:
+def start_game(player:Player) -> None:
     '''initiates a new player for a new game'''
-    global player
-    player = create_player()
-    start_level(player)
+    player.start_level()
     initiate_level(player)
 
 ##################################################### GAME SCREEN #####################################################
@@ -154,7 +147,7 @@ def initiate_level(player:Player) -> None:
 ############################################# Insert Target Heading Value #############################################
 Target_Heading_Title = tk.Label(game_screen, text='TARGET\nHEADING', font=("LoRes 9 Plus OT Wide", 14), fg="white", bg="black",
                                 padx=-10)
-Target_Heading_Title.pack(pady=(game_screen_y_padding_from_top_window, 0))
+Target_Heading_Title.pack(pady=(30, 0))
 
 Target_Heading = tk.Label(game_screen, text=str(99), font=("LoRes 9 Plus OT Wide", 40 + game_screen_font_size_offset), fg="white",
                           bg="black")
@@ -279,7 +272,6 @@ def show_pop_up(msg:str):
     global Pop_up_msg, root
     Pop_up_msg.config(fg="black", text= msg)
     blink_pop_up(7)
-    root.after(5000, lambda: Pop_up_msg.config(fg="black", text= ""))
 
 def blink_pop_up(times:int) -> None:
     """blinks the pop-up message"""
@@ -345,7 +337,7 @@ Planet_message = tk.Label(shop_screen, text="YOU HAVE REACHED THE NEXT PLANET!",
 Planet_message.pack(pady=(25,0))
 
 ################################################### Create Deck Box ###################################################
-shop_deck_box = tk.Canvas(shop_screen, width=900, height=shop_screen_deck_box_height, bd=30, bg='black', highlightthickness=5,
+shop_deck_box = tk.Canvas(shop_screen, width=900, height= 180, bd=30, bg='black', highlightthickness=5,
                      highlightbackground="white")
 shop_deck_box.pack(pady=(15,10))
 
@@ -392,7 +384,7 @@ card_buy_dict:dict = {
 
 for i in range(len(shop_screen_cards_button)):
     shop_screen_cards_button[i]:tk.Button = tk.Button(shop_card_anchor, image= card_back, width=125, height=175, borderwidth=0, bg='black',
-                        activebackground= "black", padx = shop_screen_card_padx, pady=60, command = card_buy_dict[i])
+                        activebackground= "black", padx = 8, pady=60, command = card_buy_dict[i])
     shop_screen_cards_button[i].grid(row=0, column=i, padx=10, pady=(10,0))
 
 ##################################################### Insert Cost #####################################################
@@ -420,7 +412,7 @@ Next_Level.pack(pady=(10,0))
 
 def end_shopping(player:Player):
     player.next_level(reward= 10)
-    start_level(player)
+    player.start_level()
     initiate_level(player)
 
 Reward = tk.Label(shop_screen, text="+10 CARGO", font=("LoRes 9 Plus OT Wide", 14), fg="white", bg="black")
@@ -434,7 +426,7 @@ def initiate_death(player:Player) -> None:
     Death_message.config(text=random.choice(Death_list))
     Level_score.config(text= F"YOU LOST ON: LEVEL {player.read_level()}")
     root.after(50, end_screen.tkraise)
-    player = None
+    player.reset_player()
 
 ##################################################### Insert Title #####################################################
 Title = tk.Label(end_screen, text='GAME OVER', font=("LoRes 9 Plus OT Wide", 60), fg="white", bg="black",
