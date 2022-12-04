@@ -88,6 +88,26 @@ class Player:
 
     # play phase functions
 
+    def reset_player(self) -> None:
+        ''' resets the player at the start of the game'''
+        self.main_deck = load_dan_cards_csv("Starter Deck.csv")
+        self.temp_deck: list[Card] = []
+
+        self.hand: list[Card] = []
+        self.hand_size = 5
+
+        self.cargo: int = 10
+        self.current_number: int = 0
+        self.target_number: int = 10
+        self.difficulty: int = 8
+
+        self.turn_state: str = 'continue'
+        self.level: int = 1
+        self.turn: int = 1
+
+        self.shop_choices: list[Card] = []
+        self.shop_size: int = 5
+
     def create_temp_deck(self) -> None:
         """makes copies of all cards from main_deck into temp_deck."""
         self.temp_deck.clear()
@@ -108,6 +128,19 @@ class Player:
         assert len(self.temp_deck) > 0
         card = self.temp_deck.pop()
         self.hand.append(card)
+
+    def draw_hand(self) -> None:
+        """draw until 5 cards, or draw all remaining"""
+        while len(self.hand) < 5:
+            try:
+                self.draw()
+            except:
+                break
+
+    def start_level(self):
+        """called when each level starts"""
+        self.reset_deck()
+        self.draw_hand()
 
     def play_card(self, position: int) -> None:
         """Player plays a card and update current number. Check win condition."""
@@ -141,14 +174,6 @@ class Player:
         if self.turn_state != "win":
             self.update_cargo(number= -1)
             self.turn += 1
-
-    def draw_hand(self) -> None:
-        """draw until 5 cards, or draw all remaining"""
-        while len(self.hand) < 5:
-            try:
-                self.draw()
-            except:
-                break
 
     def update_turn_state(self) -> None:
         """checks game state at the end of the turn. uses 'win', 'last', 'dead', 'continue'"""
@@ -284,17 +309,6 @@ class Player:
         return maindeck_str
 
 ############################################# BUTTON INPUTS ##########################################
-
-def start_level(player: Player):
-    """called when each level starts"""
-    player.reset_deck()
-    player.draw_hand()
-
-def create_player() -> Player:
-    """creates a player with the starting hand"""
-    player = Player()
-    player.main_deck = load_dan_cards_csv("Starter Deck.csv")
-    return player
 
 def load_dan_cards_csv(directory: str) -> list[Card]:
     """
