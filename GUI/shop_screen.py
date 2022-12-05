@@ -105,7 +105,6 @@ cards_button[4] = tk.Button(deck_button_frame, text="Card 5", font=("LoRes 9 Plu
                             pady=60,
                             command=lambda: clicked(cards_button[4], 5))
 cards_button[4].grid(row=0, column=4, padx=10)
-
 ##################################################### Insert Cost #####################################################
 for i in range(5):
     cards_cost[i] = tk.Label(description_button_frame, text="COST:" + str("4"),
