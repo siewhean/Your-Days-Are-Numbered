@@ -10,7 +10,8 @@ from main import *
 
 ##################################################### Import Font #####################################################
 def loadfont(fontpath, private=True, enumerable=True):
-    '''loads the desired font for use in the game screens'''
+    """Loads the desired font for use in the game screens."""
+    
     if isinstance(fontpath, bytes):
         pathbuf = create_string_buffer(fontpath)
         AddFontResourceEx = windll.gdi32.AddFontResourceExA
@@ -87,14 +88,15 @@ Play_Button = tk.Button(main_menu, text="PLAY", font=("LoRes 9 Plus OT Wide", 28
 Play_Button.pack(pady= (50,0))
 
 def start_game(player:Player) -> None:
-    '''initiates a new player for a new game'''
+    """Initiates a new player for a new game."""
     player.start_level()
     initiate_level(player)
 
 ##################################################### GAME SCREEN #####################################################
 
 def update_headings(player:Player, new_level:bool = False) -> None:
-    """updates the target and current headings"""
+    """Updates the target and current headings."""
+
     global Target_Heading, Current_Heading
     head_dict = player.read_headings()
     if new_level:
@@ -102,7 +104,8 @@ def update_headings(player:Player, new_level:bool = False) -> None:
     Current_Heading.config(text=str(head_dict["current"]))
 
 def update_turn_info(player:Player, new_level:bool = False) -> None:
-    """updates the turn, cargo, level, and cards left"""
+    """Updates the turn, cargo, level, and cards left."""
+
     global Level, Turn, Cargo_Left, Cards_Left
     turn_dict = player.read_turn_info()
     if new_level:
@@ -112,7 +115,7 @@ def update_turn_info(player:Player, new_level:bool = False) -> None:
     Cards_Left.config(text=str(f'CARDS LEFT: {turn_dict["cards left"]}'))
 
 def wait_here(duration:int):
-    '''stalls the window for <x> milliseconds'''
+    """Stalls the window for `duration` milliseconds."""
     global root
     var = tk.IntVar() # dummy variable
     root.after(duration, lambda: var.set(value=1)) # update dummy variable after duration
@@ -120,7 +123,8 @@ def wait_here(duration:int):
     del var
 
 def update_hand(player:Player, animate:bool=False) -> None:
-    '''updates the filepaths for the cards in hand'''
+    """Updates the filepaths for the cards in hand."""
+
     global game_screen_cards, Next_Turn, _game_screen_cards_images
     if animate:
         for i in range(len(game_screen_cards)):
@@ -134,7 +138,8 @@ def update_hand(player:Player, animate:bool=False) -> None:
         game_screen_cards[i].config(image= _game_screen_cards_images[i], state= "normal")
 
 def initiate_level(player:Player) -> None:
-    """updates all values on game start"""
+    """Updates all values on game start."""
+
     global Concede, Next_Turn, Pop_up_msg, game_screen, root
     update_turn_info(player, new_level= True)
     update_headings(player, new_level= True)
@@ -187,7 +192,8 @@ Next_Turn = tk.Button(next_button_frame, text="NEXT TURN", font=("LoRes 9 Plus O
 Next_Turn.grid(row=0, column=0)
 
 def pass_turn(player:Player):
-    """called on clicking next turn"""
+    """Called on clicking next turn."""
+
     player.end_turn()
     if player.turn_state == "win":
         player.populate_shop()
@@ -219,7 +225,8 @@ card_anchor.grid(row=0, column=1, sticky="ew")
 card_back = tk.PhotoImage(file= "assets/Cards/back.png")
 
 def on_card_play(player:Player, index:int) -> None:
-    """called on card click"""
+    """Called on card click."""
+
     global Concede, Next_Turn, game_screen_cards
     player.play_card(index)
     game_screen_cards[index].config(state="disabled", image=card_back)
@@ -268,13 +275,15 @@ Pop_up_msg = tk.Label(game_screen, text="", font=("LoRes 9 Plus OT Wide", 20), f
 Pop_up_msg.pack()
 
 def show_pop_up(msg:str):
-    '''sets and blinks the pop-up message'''
+    """Sets and blinks the pop-up message."""
+
     global Pop_up_msg, root
     Pop_up_msg.config(fg="black", text= msg)
     blink_pop_up(7)
 
 def blink_pop_up(times:int) -> None:
-    """blinks the pop-up message"""
+    """Helper functiont to blink the pop-up message."""
+
     global Pop_up_msg, root
     if times <= 0:
         Pop_up_msg.config(fg= "white")
@@ -286,10 +295,12 @@ def blink_pop_up(times:int) -> None:
 
 ######################################################### SHOP #########################################################
 def initiate_shop(player:Player) -> None:
-    '''called when shop is opened'''
+    """Called when shop is opened. Fill the shop with cards and other UI elements."""
+
     global _shop_screen_cards_images, shop_screen_cards_button, shop_screen_cards_cost_data
     global shop_screen_cards_cost, root, shop_screen
     shop_dict = player.read_shop_info()
+
     # shop is already populated by next turn button
     card_path_str = shop_dict["choices"] # get paths for shop cards
     card_costs = shop_dict["costs"]
@@ -298,24 +309,28 @@ def initiate_shop(player:Player) -> None:
         shop_screen_cards_button[i].config(image= _shop_screen_cards_images[i], state= "normal")
         shop_screen_cards_cost_data[i] = card_costs[i]
         shop_screen_cards_cost[i].config(text= f"COST:{card_costs[i]}")
+    
     random_planet_message()
     update_cargo(player)
     update_deck_contents(player)
     root.after(50, shop_screen.tkraise)
 
 def update_cargo(player:Player)-> None:
-    '''called to update player cargo'''
+    """Called to update player cargo."""
+
     global Shop_cargo_left
     Shop_cargo_left.config(text= f"CARGO LEFT: {player.cargo}")
 
 def update_deck_contents(player:Player) -> None:
-    '''called to update the deck readout'''
+    """Called to update the deck contents."""
+
     global Txt_deck
     Txt_deck.config(text= f"YOUR DECK CONTAINS:\n{player.read_deck_qty()}")
     update_buyable(player)
 
 def update_buyable(player:Player) -> None:
-    '''called to update card clickability in the shop'''
+    """Called to update card clickability in the shop."""
+
     global shop_screen_cards_cost_data, shop_screen_cards_button
     for i, cost in enumerate(shop_screen_cards_cost_data):
         if cost > player.cargo:
@@ -324,7 +339,8 @@ def update_buyable(player:Player) -> None:
 ############################################### Create Planet Message ##################################################
 
 def random_planet_message():
-    '''randomises the planet you arrive on'''
+    """Create a random planet name for buy phase."""
+
     global Planet_message
     systems:list[str] = ['jenso', 'danel', 'eeso', 'saiza', 'sewhen', 'kael', 'tellar', 'nimbus', 'altair', 'alderaan',
                          'coruscant', 'xaryxia', 'bespin', 'gallifrey', 'mondas', 'arrakis', 'krypton', 'xandar',
@@ -361,7 +377,8 @@ description_button_frame.pack()
 description_button_frame.grid_rowconfigure(2, minsize= 125)
 
 def on_card_buy(player:Player, index:int) -> None:
-    '''called when card is bought'''
+    """Called when card is bought."""
+
     global shop_screen_cards_button
     try:
         player.buy_card(index)
@@ -411,6 +428,8 @@ Next_Level = tk.Button(shop_screen, text="NEXT LEVEL", font=("LoRes 9 Plus OT Wi
 Next_Level.pack(pady=(10,0))
 
 def end_shopping(player:Player):
+    """Called when player has finished shopping. Start next level."""
+
     player.next_level(reward= 10)
     player.start_level()
     initiate_level(player)
@@ -421,10 +440,11 @@ Reward.pack(pady=2)
 ###################################################### END SCREEN ######################################################
 
 def initiate_death(player:Player) -> None:
-    '''kills you cutely'''
+    """Called upon death. Prepares death message."""
+
     global Death_message, Level_score, root, end_screen
     Death_message.config(text=random.choice(Death_list))
-    Level_score.config(text= F"YOU LOST ON: LEVEL {player.read_level()}")
+    Level_score.config(text= f"YOU LOST ON: LEVEL {player.read_level()}")
     root.after(50, end_screen.tkraise)
     player.reset_player()
 
@@ -469,7 +489,7 @@ Main_Menu_Button = tk.Button(button_frame, text="Try Again?".upper(), font=("LoR
 Main_Menu_Button.grid(row=1, column=0, padx=50)
 
 def initiate_main():
-    '''opens the main menu'''
+    """Called upon pressing try again button. Back to main menu after death."""
     global root, main_menu
     root.after(50, main_menu.tkraise)
 

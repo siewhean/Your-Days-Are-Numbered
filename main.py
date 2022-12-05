@@ -1,6 +1,6 @@
 """
 Your days are numbered
-This is a rogue-like deck builder that aims to teach people math.
+This is a rogue-like deck builder that aims to teach people basic python operators.
 """
 
 from __future__ import annotations
