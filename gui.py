@@ -192,7 +192,7 @@ Next_Turn = tk.Button(next_button_frame, text="NEXT TURN", font=("LoRes 9 Plus O
 Next_Turn.grid(row=0, column=0)
 
 def pass_turn(player:Player):
-    """Called on clicking next turn."""
+    """Called on clicking next turn. Checks player state upon ending turn."""
 
     player.end_turn()
     if player.turn_state == "win":
@@ -225,7 +225,10 @@ card_anchor.grid(row=0, column=1, sticky="ew")
 card_back = tk.PhotoImage(file= "assets/Cards/back.png")
 
 def on_card_play(player:Player, index:int) -> None:
-    """Called on card click."""
+    """
+    Called on card click. Disables card to prevent card from being played twice.
+    Checks for win condition after card is played.
+    """
 
     global Concede, Next_Turn, game_screen_cards
     player.play_card(index)
@@ -339,7 +342,7 @@ def update_buyable(player:Player) -> None:
 ############################################### Create Planet Message ##################################################
 
 def random_planet_message():
-    """Create a random planet name for buy phase."""
+    """Create a random planet name for buy phase UI."""
 
     global Planet_message
     systems:list[str] = ['jenso', 'danel', 'eeso', 'saiza', 'sewhen', 'kael', 'tellar', 'nimbus', 'altair', 'alderaan',
