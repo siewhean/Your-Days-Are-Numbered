@@ -17,12 +17,12 @@ Gameplay consists of two alternating phases:
 
 During the Play Phase, players use the cards in their deck to control the ship’s current heading. Each card contains one of the six basic Python operators (addition, subtraction, multiplication, integer division, exponent, modulo) and an integer number, forming a mathematical function. The objective is to use the functions on these cards to achieve the target heading (that is, the planet of destination – represented by a randomly generated number).
 
-During each turn, the player:
-•	Draws 5 cards from their deck.
-•	May click on any one card to play it. The card is permanently used up for the rest of the Play Phase, and not returned to the deck.
-•	May play up to all 5 cards they have drawn, in any order.
-•	May proceed to the next turn by clicking the “Next Turn” button on the upper right-hand corner.
-•	May concede by clicking the “Concede” button on the lower right-hand corner.
+During each turn, the player:  
+•	Draws 5 cards from their deck.  
+•	May click on any one card to play it. The card is permanently used up for the rest of the Play Phase, and not returned to the deck.  
+•	May play up to all 5 cards they have drawn, in any order.  
+•	May proceed to the next turn by clicking the “Next Turn” button on the upper right-hand corner.  
+•	May concede by clicking the “Concede” button on the lower right-hand corner.  
 
 ![img_1.png](img_1.png)
 
