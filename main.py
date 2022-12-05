@@ -1,95 +1,202 @@
 """
 Your days are numbered
-
-This is a rogue-like deck builder that aims to teach people math. 
+This is a rogue-like deck builder that aims to teach people math.
 """
+
 from __future__ import annotations
-from random import shuffle
-from tkinter import *
+from random import shuffle, seed, randint, choice, choices
+import tkinter as tk
+from tkinter import messagebox
 
 class Card:
-    # class variable here 
+
+    # class variable here
     operations_table = {
-        "+": lambda currentValue, cardValue: currentValue + cardValue,
-        "-": lambda currentValue, cardValue: currentValue - cardValue,
-        "*": lambda currentValue, cardValue: currentValue * cardValue,
-        "//": lambda currentValue, cardValue: currentValue // cardValue
+        "+" : lambda currentValue, cardValue: currentValue +  cardValue,
+        "-" : lambda currentValue, cardValue: currentValue -  cardValue,
+        "*" : lambda currentValue, cardValue: currentValue *  cardValue,
+        "//": lambda currentValue, cardValue: currentValue // cardValue,
+        "**": lambda currentValue, cardValue: currentValue ** cardValue,
+        "%" : lambda currentValue, cardValue: currentValue %  cardValue if currentValue >= 0 else -(abs(currentValue) % cardValue)
     }
 
-    def __init__(self, operation: str, value: int, cost: int) -> None:
+    # generate cost for shop phase
+    cost_tiers = {
+        "+" : 1, "-" : 1, "*" : 2, "//": 2, "**": 3, "%" : 3
+    }
+
+    card_back_path = "assets/Cards/back.png"
+
+    def __init__(self, operation: str, value: int, filepath: str, cost: int = None, ) -> None:
         """Card objects have a value and operation. Cost is used during buy phase only."""
         #  check if operation is valid (in operations_table.keys)
         self.operation: str = operation
         self.value: int = value
-        self.cost: int = cost 
+        self.usable: bool = True
+
+        self._filepath: str = filepath
+
+        # find cost and function
+        self.cost: int = self.value*self.cost_tiers[self.operation] if cost == None else cost
+        self._function: function = self.operations_table[self.operation]
 
     def __str__(self) -> str:
         return f"Operation: {self.operation} Value: {self.value} Cost: {self.cost}"
 
-    def use(self, currentValue: int) -> int: 
+    def alt_str(self) -> str:
+        return f"{self.operation}{self.value}"
+
+    def use(self, currentValue: int) -> int:
         """Returns new current value after card is played"""
-        return self.operations_table[self.operation](currentValue, self.value)
+        self.void()
+        return self._function(currentValue, self.value)
+
+    def void(self):
+        """makes unselectable in shop phase"""
+        self.usable = False
+
+    def _copy(self) -> Card:
+        """returns a duplicate of the card"""
+        return Card(self.operation, self.value, self.get_filepath(), self.cost)
+
+    def get_filepath(self) -> str:
+        return self._filepath
 
 class Player:
     def __init__(self) -> None:
         """Handles player actions"""
-        # create a copy of mainDeck to play 
-        self.main_deck: list = []
-        self.temp_deck: list = []
+        ## Game Variables
+        # create a copy of mainDeck to play
+        self.main_deck: list[Card] = []
+        self.temp_deck: list[Card] = []
 
-        self.hand: list = []
+        self.hand: list[Card] = []
         self.hand_size = 5
-        self.cargo: int = 0
 
-        self.current_number: int = 0 
-        self.objective_number: int = 0
+        self.cargo: int = 10
+        self.current_number: int = 0
+        self.target_number: int = 10
+        self.difficulty: int = 8
 
-        self.win: bool = False
-    
+        self.turn_state: str = 'continue'
+        self.level: int = 1
+        self.turn: int = 1
+
+        self.state: str = "game"
+
+        ## Shop Variables
+        self.shop_choices: list[Card] = []
+        self.shop_size: int = 5
+
     # play phase functions
+
+    def to_game(self) -> None:
+        """denotes game mode == game"""
+        self.state = "game"
+
+    def to_shop(self) -> None:
+        """denotes game mode == shop"""
+        self.state = "shop"
+
+    def to_deathscreen(self) -> None:
+        """denotes game mode == death"""
+        self.state = "death"
+
+    def is_game(self) -> bool:
+        """checks game mode == game"""
+        return self.state == "game"
+
+    def is_shop(self) -> bool:
+        """checks game mode == shop"""
+        return self.state == "shop"
+
+    def create_temp_deck(self) -> None:
+        """makes copies of all cards from main_deck into temp_deck."""
+        self.temp_deck.clear()
+        for card in self.main_deck:
+            self.temp_deck.append(card._copy())
+
     def reset_deck(self) -> None:
         """Fill temp deck. Empty hand."""
-        self.temp_deck = self.main_deck.copy()
+        self.create_temp_deck()
         shuffle(self.temp_deck)
         self.hand.clear()
-        self.win = False
+
+        self.turn: int = 1
+        self.turn_state: str = 'continue'
 
     def draw(self) -> None:
         """Add cards to your hand. Check lose condition."""
-        if len(self.temp_deck) == 0:
-            pass # lose 
+        assert len(self.temp_deck) > 0
         card = self.temp_deck.pop()
-        self.hand.append(card) 
-        
+        self.hand.append(card)
+
     def play_card(self, position: int) -> None:
         """Player plays a card and update current number. Check win condition."""
         card: Card = self.hand[position]
+        assert card.usable
         self.current_number = card.use(self.current_number)
-        self.is_win()
-        
+
     def update_cargo(self, number: int) -> None:
-        """Updates cargo, used at the end of turn and during buy phase"""
+        """Updates cargo, used at the end of turn. Lowest cargo is 0."""
         self.cargo += number
+        if self.cargo < 0:
+            self.cargo = 0
+
+    def is_win(self) -> bool:
+        """Check win condition."""
+        return self.current_number == self.target_number
+
+    def is_dead(self) ->bool:
+        """Checks if player is out of cards"""
+        return 0 == self.cards_left()
 
     def end_turn(self) -> None:
-        """Call end of turn actions."""
-        # put cards from hand to bottom of deck
-        for _ in range(len(self.hand)):
-            card = self.hand.pop(0)
-            self.temp_deck.insert(0, card)
+        """Call end of turn actions. if last turn, draw remaining"""
+        # put usable cards from hand to bottom of deck
+        for _ in self.hand:
+            card: Card = _
+            if card.usable:
+                self.temp_deck.insert(0, card)
+        self.hand.clear()
+        self.update_turn_state()
+        if self.turn_state != "win":
+            self.update_cargo(number= -1)
+            self.turn += 1
 
-        self.update_cargo(number=-1)
+    def draw_hand(self) -> None:
+        """draw until 5 cards, or draw all remaining"""
         while len(self.hand) < 5:
-            self.draw() 
-    
+            try:
+                self.draw()
+            except:
+                break
+
+    def update_turn_state(self) -> None:
+        """checks game state at the end of the turn. uses 'win', 'last', 'dead', 'continue'"""
+        if self.is_win():
+            self.turn_state = 'win'
+        elif self.is_dead() or self.turn_state == 'last':
+            self.turn_state = 'dead'
+        else:
+            self.turn_state = 'continue'
+
+    def check_last_turn(self) -> bool:
+        """checks if it is last turn, flags "last" on self.turnstate"""
+        if self.is_dead():
+            self.turn_state = 'last'
+        return self.is_dead()
+
+    def any_cards_left(self) -> bool:
+        '''returns True if there are any cards left in hand'''
+        for card in self.hand:
+            if card.usable:
+                return True
+        return False
+
     def cards_left(self) -> int:
         """Returns number of cards left in the deck"""
         return len(self.temp_deck)
-
-    def is_win(self):
-        """Check win condition."""
-        self.win = self.current_number == self.objective_number
-        return self.win
 
     def debug_print(self, deck):
         """Prints cards in hand or temp_deck"""
@@ -97,136 +204,394 @@ class Player:
             print(i)
 
     # buy phase functions
-    def add_to_deck(self, card: Card) -> None:
-        """Called when player successfully buys card. Adds card to mainDeck"""
-        pass 
+    def buy_card(self, index: int) -> None:
+        """Checks if player successfully buys card. Adds card to mainDeck if possible. buying dupes is not allowed"""
+        card: Card = self.shop_choices[index]
+        assert card.cost <= self.cargo, "insufficient funds!"
+        self.cargo -= card.cost
+        self.main_deck.append(card._copy())
+        self.shop_choices[index].void()
+        print(f"{card.alt_str()} added to deck!")
 
-    def next_level(self, reward: int, newObjective: int) -> None:
-        """"""
-        self.cargo += reward
-        self.objective_number = newObjective
+    def populate_shop(self) -> None:
+        """fills shop with items based on how much cargo player has"""
+        all_cards: list[Card] = load_dan_cards_csv("Card Data.csv")
+        # pulls all cards that cost less that self.cargo
+        if self.cargo != 0:
+            possible_cards: list[Card] = list(filter(lambda x: x.cost <= self.cargo, all_cards))
+            # cheaper cards are more likely to be drawn, caps at 5 times the odds of most expensive card.
+            draw_odds: list[int] = [min([self.cargo - card.cost + 1, 5]) for card in possible_cards]
+        else:
+            # if cargo = 0, just generate any cards
+            possible_cards = all_cards
+            draw_odds = [1 for _ in range(len(possible_cards))]
 
-    def is_last_turn(self):
-        """Determines if current turn is the final turn"""
-        pass
+        self.shop_choices: list[Card] = choices(possible_cards, weights=draw_odds , k=5)
 
-def main():
-    """Whole game logic here"""
-    # game setup here 
-    # root = Tk()
-    player = Player()
-    run = False
-    turn = 1
-    over_bool = False
+        # make choices unique in id()
+        self.shop_choices: list[Card] = [card._copy() for card in self.shop_choices]
 
-    player.main_deck = load_cards_csv().copy()
+    def next_level(self, reward: int) -> None:
+        """generates a new level"""
+        self.shop_choices.clear()
+        self.update_cargo(reward)
+        self.level += 1
+
+        # new objective is a math function that takes the current value and level
+        # and generates a numerical difference in the + or - direction. target is never negative for now.
+
+        base_modifier: int = self.level*self.difficulty
+        random_modifier: int = randint(0, base_modifier//2)
+
+        modify_objective: int = base_modifier + random_modifier
+
+        is_increase: bool = choice([True, False]) or modify_objective > self.target_number
+
+        if is_increase:
+            self.target_number += modify_objective
+        else:
+            self.target_number -= modify_objective
+
+    ########################## READING FUNCTIONS ##########################
+
+    def read_headings(self) -> dict:
+        """returns the target and current numbers"""
+        return {
+            "target" : self.target_number,
+            "current": self.current_number
+        }
+
+    def read_hand(self) -> list[Card]:
+        '''returns the hand of the player'''
+        return self.hand
+
+    def read_hand_filepath(self) -> list[str]:
+        '''returns the filepath of cards in hand of the player'''
+        return [card.get_filepath() for card in self.hand]
+
+    def read_turn_info(self) -> dict:
+        """returns the level, turn, cargo, and cards left in tempdeck"""
+        return {
+            "level"     : self.level,
+            "turn"      : self.turn,
+            "cargo"     : self.cargo,
+            "cards left": len(self.temp_deck)
+        }
+
+    def read_shop_info(self) -> dict:
+        '''returns the shop choices, cargo, and cards in maindeck'''
+        return {
+            "choices"    : [card.get_filepath() for card in self.shop_choices],
+            "costs"      : [card.cost for card in self.shop_choices],
+            "cargo"      : self.cargo,
+            "deck length": len(self.main_deck)
+        }
+
+    def read_level(self) -> int:
+        '''called on death to read the level of death'''
+        return self.level
+
+
+
+
+############################################# BUTTON INPUTS ##########################################
+def turn_start(player:Player):
+    """called when turn starts"""
+    player.draw_hand()
+    if player.check_last_turn():
+        # tkinter.messagebox
+        messagebox.showwarning("Warning", "This is your final turn!")
+        print("This is your final turn!")
+        print("-"*15)
+
+def start_level(player: Player):
+    """called when each level starts"""
     player.reset_deck()
-    player.objective_number = 5
-    player.cargo = 10
+    player.to_game()
+    turn_start(player)
 
-    # turn starts here 
-    while not player.is_win():
-        for _ in range(player.hand_size):
-            # check if lose here 
-            player.draw() 
-        render_turn(player, turn)
+def main_play_button():
+    """called on the menu to start the game"""
+    player = create_player()
+    start_level(player)
+    return player
 
-        valid_inputs = list(range(-1,player.hand_size))
-        # card playing loop
-        while True:
-            render_hand(player, valid_inputs)
-            player_choice = get_player_action(valid_inputs)
-            
-            if player_choice == -1:
-                print("ending turn...")
-                break 
+def card_button(player: Player, button_index: int):
+    """called when card button is clicked in play phase"""
+    try:
+        player.play_card(button_index)
+        print(f"card played, {button_index} selected")
+    except:
+        messagebox.showinfo("Invalid!", "you already played this card.")
+
+def next_turn_button(player: Player):
+    """called when next turn is clicked"""
+    player.end_turn()
+
+    if player.turn_state == "win":
+        player.populate_shop()
+        player.to_shop()
+    elif player.turn_state == "dead":
+        player.turn_state = "dead"
+        player.to_deathscreen()
+    else:
+        turn_start(player)
+
+def buy_button(player: Player, button_index: int):
+    """called when card is clicked in shop phase"""
+    player.buy_card(button_index)
+
+def done_shopping(player: Player):
+    """called when player is done shopping"""
+    player.next_level(reward= 10)
+    start_level(player)
+
+def sim_input(player: Player) -> int:
+    '''simulated button clicks, accepts 0, 1, 2, 3, 4, -1, 'quit' '''
+    while True:
+        play_input = input("enter: ")
+        if not play_input in ['0','1','2','3','4', '-1', 'quit']:
+            print("invalid input")
+            continue
+
+        if play_input == '-1':
+            return -1
+
+        if play_input == 'quit':
+            return 5
+
+        return int(play_input)
+
+
+
+
+def main_adp():
+    player = None
+    start = True
+    # tk window simulation
+    root = tk.Tk()
+    root.withdraw()
+    home_screen_cmd()
+
+    while True:
+        # input simulation
+        choice = sim_input(player)
+        if start:
+            # start turn button
+            player:Player = main_play_button()
+            render_turn(player)
+            render_hand(player)
+            start = False
+        elif choice == 5:
+            # concede button / testing kill command "quit"
+            render_death(player)
+            print("quitting...")
+            del player
+            return
+        elif player.is_game():
+            if choice == -1:
+                # next turn button
+                render_end_turn()
+                next_turn_button(player)
+
+                ## GRAPHICS
+                if player.is_game():
+                    render_turn(player)
+                    render_hand(player)
+                elif player.is_shop():
+                    render_end_game_report(player)
+                    render_shop(player)
+                elif player.turn_state == "dead":
+                    render_death(player)
+                    del player
+                    return
+                ## ---------
             else:
-                player.play_card(player_choice) 
-                # prevent same card from playing
-                valid_inputs.remove(player_choice)
+                # card buttons
+                card_button(player, choice)
+                render_hand(player)
+        elif player.is_shop():
+            if choice == -1 :
+                # finish shopping button
+                done_shopping(player)
+                render_shop_exit(player)
+                render_turn(player)
+                render_hand(player)
+            else:
+                # buy card buttons
+                buy_button(player, choice)
+                render_shop(player)
 
+
+def play_phase(player: Player) -> Player:
+    """Play Phase logic"""
+    player.reset_deck()
+    while True:
+        turn_running = True
+        player.draw_hand()
+
+        if player.is_dead():
+            last_turn = True
+            print("This is your final turn!")
+            print("-"*15)
+        else:
+            last_turn = False
+
+        render_turn(player)
+        #card play loop
+        while turn_running:
+            render_hand(player)
+            player_choice = get_player_action(player)
+
+            if player_choice == -1:
+                render_end_turn()
+                turn_running = False
+            else:
+                player.play_card(player_choice)
                 # end turn if no cards left
-                if valid_inputs == [-1]:
-                    print("ending turn...")
-                    break 
-        # end of turn actions
+                if all([not card.usable for card in player.hand]):
+                    render_end_turn()
+                    turn_running = False
+
+        #end turn, check for win
         player.end_turn()
-        turn += 1
-    
-    # tested: can win 
-    # untested: cannot lose 
-    # cost = value * value_of_operator
-    # power ** and remainder cards %
-    
-    print("Win" if player.win else "Lose")
 
-    # gameStates: menu, play, buy
-    gameState = "play"
+        if player.turn_state == "win":
+            render_end_game_report(player)
+            break
+        elif player.turn_state == "dead" or last_turn:
+            player.turn_state = "dead"
+            render_death(player)
+            break
 
-    while run:
-        if gameState == "menu":
-            pass
-        elif gameState == "play":
-            # draw 5 cards 
+    return player
 
+def shop_phase(player: Player) -> Player:
+    """shop menu operation"""
+    # when shop is called, populate shop
+    player.populate_shop()
+    shopping = True
+    while shopping:
+        render_shop(player)
+        # get input
+        player_choice = get_shop_action(player)
+        print("-"*15)
+        # buy card
+        if player_choice == -1:
+            shopping = False
+        else:
+            try:
+                player.buy_card(player_choice)
+            except:
+                print("Card is too expensive!")
+        # terminate loop when done shopping
+    player.next_level(10)
+    render_shop_exit(player)
+    return player
 
-            # when card gets clicked, card disappears, number changes 
+def home_screen_cmd() -> None:
+    """just a lil something for the title card"""
+    print("""_   _ ____ _  _ ____    ___  ____ _   _ ____    ____ ____ ____    _  _ _  _ _  _ ___  ____ ____ ____ ___  
+ \_/  |  | |  | |__/    |  \ |__|  \_/  [__     |__| |__/ |___    |\ | |  | |\/| |__] |___ |__/ |___ |  \ 
+  |   |__| |__| |  \    |__/ |  |   |   ___]    |  | |  \ |___    | \| |__| |  | |__] |___ |  \ |___ |__/ 
+                                                                                                         
+                   ----- coded by Jean, Daniel, Ee Song, Saif, Siew Hean, Kaelen -----""")
+    print("type '0' to start game")
 
-            # click end turn 
+def create_player() -> Player:
+    """creates a player with the starting hand"""
+    player = Player()
+    player.main_deck = load_dan_cards_csv("Starter Deck.csv")
+    return player
 
-            # all cards get inserted to bottom of deck
+def main_cmd():
+    """Whole game logic here"""
+    home_screen_cmd()
+    input()
+    # game setup here
+    player = create_player()
+    while True:
+        player = play_phase(player)
+        if player.turn_state == "dead":
+            break
+        player = shop_phase(player)
 
-            # cargo - 1  
-
-            pass 
-        elif gameState == "buy":
-            pass 
-
-    # last line here 
-    # root.mainloop()
-
-def load_cards_csv() -> list[Card]:
+def load_dan_cards_csv(directory: str) -> list[Card]:
     """
-    csv headings: operation,value,cost
+    csv headings: operation,value,cost,filepath
     returns a list of card objects
     """
-    with open("cards.csv") as f:
-        # [1:] to exclude the heading 
+    with open(directory) as f:
+        # [1:] to exclude the heading
         card_info: list[str] = f.read().split()[1:]
         cards = []
         for i in card_info:
-            card_operation, card_value, card_cost = tuple(i.split(sep=","))
-            new_card = Card(card_operation, int(card_value), int(card_cost)) 
+            card_operation, card_value, card_cost, filepath = tuple(i.split(sep=","))
+            if card_cost == '':
+                new_card = Card(card_operation, int(card_value), filepath=filepath)
+            else:
+                new_card = Card(card_operation, int(card_value), filepath=filepath, cost= int(card_cost))
             cards.append(new_card)
     return cards
 
-def render_hand(player: Player, valid_inputs: list[int]):
+def render_hand(player: Player):
     """Prints out all relevant info per card play"""
     print("-"*15)
-    print(f"Objective number: {player.objective_number}")
-    print(f"Current Number: {player.current_number}")
+    print(f" TARGET HEADING: {player.target_number}")
+    print(f"CURRENT HEADING: {player.current_number}")
+    print("-"*15)
+    # print hand
+    print(f"Hand (playable cards)")
+    for i,_ in enumerate(player.hand):
+        card:Card = _
+        if card.usable:
+            print(f"Position {i} : {card.alt_str()}")
+
+def render_shop_exit(player:Player):
+    print(f"starting new level... Target: {player.target_number}. You recieve 10 more cargo!")
     print("-"*15)
 
-    # print hand 
-    print(f"Hand (playable cards)")
-    for i in valid_inputs[1:]:
-        print(f"Position {i} {player.hand[i]}")
-
-def render_turn(player: Player, turn: int):
+def render_turn(player: Player):
     """Only runs at the start of each turn"""
-    print(f"Turn: {turn}")
-    print(f"Cargo: {player.cargo}")
-    print(f"Cards in deck: {player.cards_left()}")
+    print(f"     LEVEL: {player.level}")
+    print(f"      TURN: {player.turn}")
+    print(f"     CARGO: {player.cargo}")
+    print(f"CARDS LEFT: {player.cards_left()}")
 
-def render_end_game_report(player: Player, turn: int):
+def render_end_turn():
+    print("-"*15)
+    print("ending turn...")
+    print("-"*15)
+
+def render_end_game_report(player: Player):
     """Runs after play phase, before buy phase"""
     print("-"*15)
-    print(f"Turns taken: {turn}")
+    print("You have reached the next spaceport!")
+    print(f"Turns taken: {player.turn}")
     print(f"Cargo: {player.cargo}")
-    print(f"Cards in deck: {player.cards_left()}")
+    print(f"Cards left in deck: {player.cards_left()}")
     print("-"*15)
 
-def get_player_action(valid_inputs: list[int]) -> int:
+def render_shop(player: Player):
+    """Runs during shop phase"""
+    print("-"*15)
+    print("<THE SHOP>")
+    for i, card in enumerate(player.shop_choices):
+        if card.usable:
+            print(f"Position {i} {card}")
+    print()
+    print(f"you have {player.cargo} cargo to spend,")
+    print(f"you have {len(player.main_deck)} cards in your deck")
+
+def render_death(player: Player):
+    """runs on endgame"""
+    print("-"*15)
+    print("Game Over")
+    print("you have run out of cards!")
+    print(f"Level: {player.level}")
+    input("press enter to return to main menu")
+
+def get_player_action(player:Player) -> int:
     """Get player action and return card position. -1 to indicate end turn"""
     while True:
         player_action = input("Input the position of card you wish to play. Input -1 to end turn. Input: ")
@@ -235,11 +600,36 @@ def get_player_action(valid_inputs: list[int]) -> int:
         else:
             print("Invalid input")
             continue
-        if player_action in valid_inputs:
+        try:
+            assert player_action < len(player.hand)
+        except:
+            print("Invalid input")
+            continue
+        if (player.hand[player_action]).usable or player_action == -1:
+            break
+        else:
+            print("Invalid input")
+    return player_action
+
+def get_shop_action(player:Player) -> int:
+    """Get player's shop action and return card position. -1 to indicate done shopping"""
+    while True:
+        player_action = input("Input the position of card you wish to buy. Input -1 to finish shopping and start next level. Input: ")
+        if player_action.isdigit() or player_action == "-1":
+            player_action = int(player_action)
+        else:
+            print("Invalid input")
+            continue
+        try:
+            assert player_action < len(player.shop_choices)
+        except:
+            print("Invalid input")
+            continue
+        if (player.shop_choices[player_action]).usable or player_action == -1:
             break
         else:
             print("Invalid input")
     return int(player_action)
 
 if __name__ == "__main__":
-    main()
+    main_adp()

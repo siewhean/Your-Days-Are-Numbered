@@ -6,7 +6,8 @@ import tkinter as tk
 
 def game_screen():
     root.destroy()
-    import game_screen
+
+
 def clicked(cards, index):
     print("Index" + str(index))
     cards.state = 'disabled'
@@ -127,6 +128,6 @@ Next_Turn.grid()
 
 def back():
     root.destroy()
-    import main_menu
+
 
 root.mainloop()
