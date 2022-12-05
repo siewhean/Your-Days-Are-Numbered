@@ -17,7 +17,7 @@ class Card:
         "*" : lambda currentValue, cardValue: currentValue *  cardValue,
         "//": lambda currentValue, cardValue: currentValue // cardValue,
         "**": lambda currentValue, cardValue: currentValue ** cardValue,
-        "%" : lambda currentValue, cardValue: currentValue %  cardValue if currentValue >= 0 else -(abs(currentValue) % cardValue)
+        "%" : lambda currentValue, cardValue: currentValue %  cardValue
     }
 
     # generate cost for shop phase
