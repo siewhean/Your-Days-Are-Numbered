@@ -28,8 +28,20 @@ class Card:
     card_back_path = "assets/Cards/back.png"
 
     def __init__(self, operation: str, value: int, filepath: str, cost: int = None, ) -> None:
-        """Card objects have a value and operation. Cost is used during buy phase only."""
-        #  check if operation is valid (in operations_table.keys)
+        """
+        Card class contain all card logic.
+    
+        **Args:**
+
+        `operation`: Python operation.
+
+        `value`: An integer value.
+
+        `filepath`: Used to display the image file of the card.
+
+        `cost`: Used only in buy phase. 
+        """
+
         self.operation: str = operation
         self.value: int = value
         self.usable: bool = True
@@ -47,16 +59,16 @@ class Card:
         return f"{self.operation}{self.value}"
 
     def use(self, currentValue: int) -> int:
-        """Returns new current value after card is played"""
+        """Returns new current value after card is played."""
         self.void()
         return self._function(currentValue, self.value)
 
     def void(self):
-        """makes unselectable in shop phase"""
+        """Makes card unselectable in shop phase."""
         self.usable = False
 
     def _copy(self) -> Card:
-        """returns a duplicate of the card"""
+        """Returns a duplicate of the card."""
         return Card(self.operation, self.value, self.get_filepath(), self.cost)
 
     def get_filepath(self) -> str:
@@ -64,10 +76,11 @@ class Card:
 
 class Player:
     def __init__(self) -> None:
-        """Handles player actions"""
+        """All game variables are defined here. Handles player input."""
+
         ## Game Variables
-        # create a copy of mainDeck to play
         self.main_deck: list[Card] = []
+        # create a copy of mainDeck to play
         self.temp_deck: list[Card] = []
 
         self.hand: list[Card] = []
@@ -87,9 +100,9 @@ class Player:
         self.shop_size: int = 5
 
     # play phase functions
-
     def reset_player(self) -> None:
-        ''' resets the player at the start of the game'''
+        """Resets the player at the start of the game."""
+
         self.main_deck = load_dan_cards_csv("Starter Deck.csv")
         self.temp_deck: list[Card] = []
 
@@ -109,13 +122,15 @@ class Player:
         self.shop_size: int = 5
 
     def create_temp_deck(self) -> None:
-        """makes copies of all cards from main_deck into temp_deck."""
+        """Makes copies of all cards from `main_deck` and put them into `temp_deck`."""
+
         self.temp_deck.clear()
         for card in self.main_deck:
             self.temp_deck.append(card._copy())
 
     def reset_deck(self) -> None:
         """Fill temp deck. Empty hand."""
+
         self.create_temp_deck()
         shuffle(self.temp_deck)
         self.hand.clear()
@@ -125,12 +140,14 @@ class Player:
 
     def draw(self) -> None:
         """Add cards to your hand. Check lose condition."""
+
         assert len(self.temp_deck) > 0
         card = self.temp_deck.pop()
         self.hand.append(card)
 
     def draw_hand(self) -> None:
-        """draw until 5 cards, or draw all remaining"""
+        """Draw until 5 cards, or draw all remaining cards."""
+
         while len(self.hand) < 5:
             try:
                 self.draw()
@@ -138,18 +155,20 @@ class Player:
                 break
 
     def start_level(self):
-        """called when each level starts"""
+        """Called when each level starts."""
         self.reset_deck()
         self.draw_hand()
 
     def play_card(self, position: int) -> None:
-        """Player plays a card and update current number. Check win condition."""
+        """Checks if card is usable, then plays the card and update current number."""
+
         card: Card = self.hand[position]
         assert card.usable
         self.current_number = card.use(self.current_number)
 
     def update_cargo(self, number: int) -> None:
         """Updates cargo, used at the end of turn. Lowest cargo is 0."""
+
         self.cargo += number
         if self.cargo < 0:
             self.cargo = 0
@@ -158,25 +177,30 @@ class Player:
         """Check win condition."""
         return self.current_number == self.target_number
 
-    def is_dead(self) ->bool:
-        """Checks if player is out of cards"""
+    def is_dead(self) -> bool:
+        """Checks if player is out of cards."""
         return 0 == self.cards_left()
 
     def end_turn(self) -> None:
-        """Call end of turn actions. if last turn, draw remaining"""
+        """Call end of turn actions. If last turn, draw remaining."""
         # put usable cards from hand to bottom of deck
         for _ in self.hand:
             card: Card = _
             if card.usable:
                 self.temp_deck.insert(0, card)
         self.hand.clear()
+
         self.update_turn_state()
         if self.turn_state != "win":
             self.update_cargo(number= -1)
             self.turn += 1
 
     def update_turn_state(self) -> None:
-        """checks game state at the end of the turn. uses 'win', 'last', 'dead', 'continue'"""
+        """
+        Checks game state at the end of the turn. 
+        Possible game states: `'win'`, `'last'`, `'dead'`, `'continue'`
+        """
+
         if self.is_win():
             self.turn_state = 'win'
         elif self.is_dead() or self.turn_state == 'last':
@@ -185,30 +209,37 @@ class Player:
             self.turn_state = 'continue'
 
     def check_last_turn(self) -> bool:
-        """checks if it is last turn, flags "last" on self.turnstate"""
+        """
+        Checks if it is last turn, sets `turn_state` to `'last'`. 
+        Check if player is dead.
+        """
+
         if self.is_dead():
             self.turn_state = 'last'
         return self.is_dead()
 
     def any_cards_left(self) -> bool:
-        '''returns True if there are any cards left in hand'''
+        """Returns `True` if there are any cards left in hand."""
+
         for card in self.hand:
             if card.usable:
                 return True
         return False
 
     def cards_left(self) -> int:
-        """Returns number of cards left in the deck"""
+        """Returns number of cards left in the deck."""
         return len(self.temp_deck)
 
     def debug_print(self, deck):
-        """Prints cards in hand or temp_deck"""
+        """Prints cards in hand or temp_deck."""
         for i in deck:
             print(i)
 
     # buy phase functions
     def buy_card(self, index: int) -> None:
-        """Checks if player successfully buys card. Adds card to mainDeck if possible. buying dupes is not allowed"""
+        """Checks if player successfully buys card. 
+        Adds card to `main_deck` if possible. buying duplicates are not allowed."""
+
         card: Card = self.shop_choices[index]
         assert card.cost <= self.cargo, "insufficient funds!"
         self.cargo -= card.cost
@@ -216,7 +247,8 @@ class Player:
         self.shop_choices[index].void()
 
     def populate_shop(self) -> None:
-        """fills shop with items based on how much cargo player has"""
+        """Fills shop with items based on how much cargo player has."""
+
         all_cards: list[Card] = load_dan_cards_csv("Card Data.csv")
         # pulls all cards that cost less that self.cargo
         if self.cargo != 0:
@@ -230,11 +262,12 @@ class Player:
 
         self.shop_choices: list[Card] = choices(possible_cards, weights=draw_odds , k=5)
 
-        # make choices unique in id()
+        # make choices unique in memory, not aliases
         self.shop_choices: list[Card] = [card._copy() for card in self.shop_choices]
 
     def next_level(self, reward: int) -> None:
-        """generates a new level"""
+        """Generates a new level. Randomly generate next level objective."""
+
         self.shop_choices.clear()
         self.update_cargo(reward)
         self.level += 1
@@ -257,18 +290,21 @@ class Player:
     ########################## READING FUNCTIONS ##########################
 
     def read_headings(self) -> dict:
-        """returns the target and current numbers"""
+        """Returns the target and current numbers."""
+
         return {
             "target" : self.target_number,
             "current": self.current_number
         }
 
     def read_hand_filepath(self) -> list[str]:
-        '''returns the filepath of cards in hand of the player'''
+        """Returns the filepath of cards in hand of the player."""
+
         return [card.get_filepath() for card in self.hand]
 
     def read_turn_info(self) -> dict:
-        """returns the level, turn, cargo, and cards left in tempdeck"""
+        """Returns the level, turn, cargo, and cards left in `temp_deck`."""
+
         return {
             "level"     : self.level,
             "turn"      : self.turn,
@@ -277,7 +313,8 @@ class Player:
         }
 
     def read_shop_info(self) -> dict:
-        '''returns the shop choices, cargo, and cards in maindeck'''
+        """Returns the shop choices, cargo, and cards in `main_deck`."""
+
         return {
             "choices"    : [card.get_filepath() for card in self.shop_choices],
             "costs"      : [card.cost for card in self.shop_choices],
@@ -286,12 +323,14 @@ class Player:
         }
 
     def read_level(self) -> int:
-        '''called on death to read the level of death'''
+        """Called on death to read the level of death."""
+
         return self.level
 
     def read_deck_qty(self) -> str:
-        '''returns a string showing the cards in the maindeck sorted by operation and value, divided into quantity'''
-        card_dict:dict = {
+        """Returns a string showing the cards in the maindeck sorted by operation and value, divided into quantity."""
+
+        card_dict: dict = {
             '+1': 0, '+2': 0, '+3': 0, '+4': 0, '+5': 0, '+6': 0, '+7': 0, '+8': 0, '+9': 0,
             '-1': 0, '-2': 0, '-3': 0, '-4': 0, '-5': 0, '-6': 0, '-7': 0, '-8': 0, '-9': 0,
             '*2': 0, '*3': 0, '*4': 0, '*5': 0,
@@ -302,6 +341,7 @@ class Player:
         deck_str = [card.alt_str() for card in self.main_deck]
         for alt_str in deck_str:
             card_dict[alt_str] += 1
+        
         maindeck_str_ls: list[str] = [f"{v}× [{k}]" for k,v in card_dict.items() if v != 0]
         length = 9
         maindeck_str_split_ls = [(' '*5).join(maindeck_str_ls[i:i+length]) for i in range(0,len(maindeck_str_ls), length)]
@@ -313,7 +353,14 @@ class Player:
 def load_dan_cards_csv(directory: str) -> list[Card]:
     """
     csv headings: operation,value,cost,filepath
-    returns a list of card objects
+    
+    **Args:**
+
+    `directory`: Path to csv file.
+
+    **Returns:**
+    
+    A list of card objects.
     """
     with open(directory) as f:
         # [1:] to exclude the heading
