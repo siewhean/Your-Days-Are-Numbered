@@ -8,6 +8,10 @@ from tkinter import messagebox
 import random
 from main import *
 
+'''
+The code for the loadfont function was taken from the code found at
+https://stackoverflow.com/questions/11993290/truly-custom-font-in-tkinter
+'''
 ##################################################### Import Font #####################################################
 def loadfont(fontpath, private=True, enumerable=True):
     """Loads the desired font for use in the game screens."""
