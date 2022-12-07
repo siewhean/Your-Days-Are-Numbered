@@ -42,7 +42,7 @@ When the player is satisfied, they may click the “Next Level” button to proc
 
 ## Graphical User Interface
 ### Main Menu
-![img_3.png](README_images\img_3.png)
+![img_3.png](README_images/img_3.png)
 ### Game Screen
 ![img_1.png](README_images\img_1.png)
 ### Shop Screen
