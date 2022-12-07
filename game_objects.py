@@ -103,7 +103,7 @@ class Player:
     def reset_player(self) -> None:
         """Resets the player at the start of the game."""
 
-        self.main_deck = load_dan_cards_csv("data\Starter Deck.csv")
+        self.main_deck = load_dan_cards_csv("data/Starter Deck.csv")
         self.temp_deck: list[Card] = []
 
         self.hand: list[Card] = []
@@ -249,7 +249,7 @@ class Player:
     def populate_shop(self) -> None:
         """Fills shop with items based on how much cargo player has."""
 
-        all_cards: list[Card] = load_dan_cards_csv("data\Card Data.csv")
+        all_cards: list[Card] = load_dan_cards_csv("data/Card Data.csv")
         # pulls all cards that cost less that self.cargo
         if self.cargo != 0:
             possible_cards: list[Card] = list(filter(lambda x: x.cost <= self.cargo, all_cards))

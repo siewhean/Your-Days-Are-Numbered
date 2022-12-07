@@ -31,10 +31,10 @@ def loadfont(fontpath, private=True, enumerable=True):
     numFontsAdded = AddFontResourceEx(byref(pathbuf), flags, 0)
     return bool(numFontsAdded)
 
-font = loadfont("assets\LoRes.ttf")
+font = loadfont("assets/LoRes.ttf")
 root = tk.Tk()
 root.title("YOUR DAYS ARE NUMBERED")
-root.iconbitmap("assets\icon_black.ico")
+root.iconbitmap("assets/icon_black.ico")
 root.configure(background='black')
 root.state('zoomed') # Maximise Window on Run
 
