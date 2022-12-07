@@ -24,7 +24,7 @@ During each turn, the player:
 •	May proceed to the next turn by clicking the “Next Turn” button on the upper right-hand corner.  
 •	May concede by clicking the “Concede” button on the lower right-hand corner.  
 
-![img_1.png](README_images\img_1.png)
+![README_images\img_1.png](README_images\img_1.png)
 
 The number of cards remaining in the deck is displayed on the lower left-hand corner of the screen. The player may play until they have run out of cards. 1 cargo is also depleted per turn (the cabbages rot over time), though players may continue with turns even after they have run out of cargo.
 
@@ -34,7 +34,7 @@ If the player uses up all their cards without managing to reach the target headi
 
 During the Buy Phase, players have arrived at the destination planet to sell their cabbages.
 
-![img_2.png](README_images\img_2.png)
+![README_images\img_2.png](README_images\img_2.png)
 
 During this phase, the player may choose from five cards to buy. The cost of each card (in units of cargo) is displayed below each card. The player may buy as few or as many cards as they like, until they run out of cargo. Players must strategize carefully to manage their limited resources, choosing carefully which cards would be most useful to add to their deck.
 
@@ -42,13 +42,13 @@ When the player is satisfied, they may click the “Next Level” button to proc
 
 ## Graphical User Interface
 ### Main Menu
-![img_3.png](README_images\img_3.png)
+![README_images\img_3.png](README_images\img_3.png)
 ### Game Screen
-![img_1.png](README_images\img_1.png)
+![README_images\img_1.png](README_images\img_1.png)
 ### Shop Screen
-![img_2.png](README_images\img_2.png)
+![README_images\img_2.png](README_images\img_2.png)
 ### End Screen
-![img_4.png](README_images\img_4.png)
+![README_images\img_4.png](README_images\img_4.png)
 
 ## Technologies
 
