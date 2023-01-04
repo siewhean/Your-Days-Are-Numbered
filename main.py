@@ -216,6 +216,11 @@ def pass_turn(player:Player):
             show_pop_up("FINAL TURN")
         update_hand(player, animate=True)
         update_turn_info(player)
+    
+    if player.is_last_turn():
+        Next_Turn.config(state="disabled")
+    else:
+        Next_Turn.config(state="normal")
         
 ################################################### Create Deck Box ###################################################
 deck_box = tk.Canvas(game_screen, width=game_screen_deck_box_width, height=game_screen_deck_box_height, bd=30, bg='black')

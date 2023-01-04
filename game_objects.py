@@ -180,6 +180,10 @@ class Player:
     def is_dead(self) -> bool:
         """Checks if player is out of cards."""
         return 0 == self.cards_left()
+    
+    def is_last_turn(self) -> bool:
+        """Checks if player has any cargo left to go to next turn"""
+        return self.cargo == 0
 
     def end_turn(self) -> None:
         """Call end of turn actions. If last turn, draw remaining."""
