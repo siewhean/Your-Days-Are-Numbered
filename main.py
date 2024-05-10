@@ -1,635 +1,516 @@
-"""
-Your days are numbered
-This is a rogue-like deck builder that aims to teach people math.
-"""
-
 from __future__ import annotations
-from random import shuffle, seed, randint, choice, choices
+from ctypes import windll, byref, create_unicode_buffer, create_string_buffer
+
+FR_PRIVATE = 0x10
+FR_NOT_ENUM = 0x20
 import tkinter as tk
 from tkinter import messagebox
+import random
+from game_objects import *
+
+'''
+The code for the loadfont function was taken from the code found at
+https://stackoverflow.com/questions/11993290/truly-custom-font-in-tkinter
+'''
+##################################################### Import Font #####################################################
+def loadfont(fontpath, private=True, enumerable=True):
+    """Loads the desired font for use in the game screens."""
+    
+    if isinstance(fontpath, bytes):
+        pathbuf = create_string_buffer(fontpath)
+        AddFontResourceEx = windll.gdi32.AddFontResourceExA
+
+    elif isinstance(fontpath, str):
+        pathbuf = create_unicode_buffer(fontpath)
+        AddFontResourceEx = windll.gdi32.AddFontResourceExW
+
+    else:
+        raise TypeError('fontpath must be of type str or unicode')
+
+    flags = (FR_PRIVATE if private else 0) | (FR_NOT_ENUM if not enumerable else 0)
+    numFontsAdded = AddFontResourceEx(byref(pathbuf), flags, 0)
+    return bool(numFontsAdded)
+
+font = loadfont("assets/LoRes.ttf")
+root = tk.Tk()
+root.title("YOUR DAYS ARE NUMBERED")
+root.iconbitmap("assets/icon_black.ico")
+root.configure(background='black')
+root.state('zoomed') # Maximise Window on Run
+
+###################################################### Variables ######################################################
+
+player:Player = Player()
+player.reset_player()
+
+game_screen_deck_box_width = 900
+game_screen_deck_box_height = 150
+game_screen_font_size_offset = 5
+game_screen_cards:list[tk.Button] = ["cards_1", "cards2", "cards_3", "cards_4", "cards_5"]
+_game_screen_cards_images:list[tk.PhotoImage] = ["cards_1", "cards2", "cards_3", "cards_4", "cards_5"]
+
+shop_screen_cards_button: list[tk.Button] = ["cards_1", "cards2", "cards_3", "cards_4", "cards_5"]
+shop_screen_cards_cost: list[tk.Button] = ["cards_cost_1", "cards_cost_2", "cards_cost_3", "cards_cost_4", "cards_cost_5"]
+_shop_screen_cards_images:list[tk.PhotoImage] = ["cards_1", "cards2", "cards_3", "cards_4", "cards_5"]
+shop_screen_cards_cost_data: list[int] = [0]*5
+
+end_screen_y_padding_from_top_window = 100
+
+############################################## Switching Between Windows ##############################################
+root.rowconfigure(0, weight=1)
+root.columnconfigure(0, weight=1)
+
+main_menu = tk.Frame(root)
+main_menu.configure(background='black')
+game_screen = tk.Frame(root)
+game_screen.configure(background='black')
+shop_screen = tk.Frame(root)
+shop_screen.configure(background='black')
+end_screen = tk.Frame(root)
+end_screen.configure(background='black')
+
+for frame in (main_menu, game_screen, shop_screen, end_screen):
+    frame.grid(row=0,column=0,sticky='nsew')
+
+panel = tk.Label(main_menu, bg="black")
+panel.pack(side="bottom", fill="both", expand="yes")
+
+###################################################### MAIN MENU ######################################################
+
+##################################################### Insert Title #####################################################
+Title_img = tk.PhotoImage(file= "assets/Title_2.png")
+
+Title = tk.Label(main_menu, image= Title_img, fg="white", bg="black",
+                 padx=-10)
+Title.pack(pady=(100, 0))
+Title.pack(fill='both', expand=True)
+
+################################################## Insert Play Button ##################################################
+Play_Button = tk.Button(main_menu, text="PLAY", font=("LoRes 9 Plus OT Wide", 28), fg="white", bg="black",
+                        borderwidth=10, highlightbackground="white", width=10,
+                        command=lambda: start_game(player))
+Play_Button.pack(pady= (50,0))
+
+def start_game(player:Player) -> None:
+    """Initiates a new player for a new game."""
+    player.start_level()
+    initiate_level(player)
+
+##################################################### GAME SCREEN #####################################################
+
+def update_headings(player:Player, new_level:bool = False) -> None:
+    """Updates the target and current headings."""
+
+    global Target_Heading, Current_Heading
+    head_dict = player.read_headings()
+    if new_level:
+        Target_Heading.config(text=str(head_dict["target"]))
+    Current_Heading.config(text=str(head_dict["current"]))
+
+def update_turn_info(player:Player, new_level:bool = False) -> None:
+    """Updates the turn, cargo, level, and cards left."""
+
+    global Level, Turn, Cargo_Left, Cards_Left
+    turn_dict = player.read_turn_info()
+    if new_level:
+        Level.config(text=str(f'LEVEL: {turn_dict["level"]}'))
+    Turn.config(text=str(f'TURN: {turn_dict["turn"]}'))
+    Cargo_Left.config(text=str(f'CARGO LEFT: {turn_dict["cargo"]}'))
+    Cards_Left.config(text=str(f'CARDS LEFT: {turn_dict["cards left"]}'))
+
+'''
+The code for the stall function was adapted from the code found at
+https://stackoverflow.com/questions/51764757/waiting-certain-amount-of-time-with-tkinter
+'''
+
+def wait_here(duration:int):
+    """Stalls the window for `duration` milliseconds."""
+    global root
+    var = tk.IntVar() # dummy variable
+    root.after(duration, lambda: var.set(value=1)) # update dummy variable after duration
+    root.wait_variable(var) # wait for dummy variable to update
+    del var
+
+def update_hand(player:Player, animate:bool=False) -> None:
+    """Updates the filepaths for the cards in hand."""
+
+    global game_screen_cards, Next_Turn, _game_screen_cards_images
+    if animate:
+        for i in range(len(game_screen_cards)):
+            game_screen_cards[i].config(state="disabled", image=card_back)
+        Next_Turn.config(state="disable")
+        wait_here(450)
+        Next_Turn.config(state="normal")
+    card_path_str = player.read_hand_filepath()
+    for i, string in enumerate(card_path_str):
+        _game_screen_cards_images[i] = tk.PhotoImage(file= string)
+        game_screen_cards[i].config(image= _game_screen_cards_images[i], state= "normal")
+
+def initiate_level(player:Player) -> None:
+    """Updates all values on game start."""
+
+    global Concede, Next_Turn, Pop_up_msg, game_screen, root
+    update_turn_info(player, new_level= True)
+    update_headings(player, new_level= True)
+    update_hand(player)
+    Concede.config(state= "normal")
+    Next_Turn.config(text= "NEXT TURN")
+    Pop_up_msg.config(fg= 'black')
+    root.after(50, game_screen.tkraise)
+
+############################################# Insert Target Heading Value #############################################
+Target_Heading_Title = tk.Label(game_screen, text='TARGET\nHEADING', font=("LoRes 9 Plus OT Wide", 14), fg="white", bg="black",
+                                padx=-10)
+Target_Heading_Title.pack(pady=(30, 0))
+
+Target_Heading = tk.Label(game_screen, text=str(99), font=("LoRes 9 Plus OT Wide", 40 + game_screen_font_size_offset), fg="white",
+                          bg="black")
+Target_Heading.pack()
+
+############################################# Insert Current Heading Value #############################################
+Current_Heading_Title = tk.Label(game_screen, text='CURRENT\nHEADING', font=("LoRes 9 Plus OT Wide", 18), fg="white",
+                                 bg="black", padx=-10)
+Current_Heading_Title.pack()
+Current_Heading = tk.Label(game_screen, text=str(34), font=("LoRes 9 Plus OT Wide", 45 + game_screen_font_size_offset), fg="white",
+                           bg="black")
+Current_Heading.pack()
+
+################################################# Insert Descriptions ##################################################
+description_button_frame = tk.Frame(game_screen)
+description_button_frame.configure(bg="black")
+description_button_frame.pack()
+
+Level = tk.Label(description_button_frame, text="LEVEL: 1", font=("LoRes 9 Plus OT Wide", 14),
+                      fg="white", bg="black")
+Level.grid(row=0, column=0, padx=(0, game_screen_deck_box_width/5-15), pady=(20, 0))
+
+Turn = tk.Label(description_button_frame, text="TURN 1", font=("LoRes 9 Plus OT Wide", 14), fg="white",
+                bg="black")
+Turn.grid(row=0, column=1, padx=(0, (game_screen_deck_box_width/5)-15), pady=(20, 0))
+
+Cargo_Left = tk.Label(description_button_frame, text="CARGO LEFT: 1", font=("LoRes 9 Plus OT Wide", 14),
+                      fg="white", bg="black")
+Cargo_Left.grid(row=0, column=2, padx=(0, game_screen_deck_box_width/5-15), pady=(20, 0))
+
+################################################## Insert Next Button ##################################################
+next_button_frame = tk.Frame(description_button_frame)
+next_button_frame.grid(row=0, column=3)
+
+Next_Turn = tk.Button(next_button_frame, text="NEXT TURN", font=("LoRes 9 Plus OT Wide", 14), fg="white", bg="black", width=10, 
+                      command=lambda: pass_turn(player))
+Next_Turn.grid(row=0, column=0)
+
+def pass_turn(player:Player):
+    """Called on clicking next turn. Checks player state upon ending turn."""
 
-class Card:
-
-    # class variable here
-    operations_table = {
-        "+" : lambda currentValue, cardValue: currentValue +  cardValue,
-        "-" : lambda currentValue, cardValue: currentValue -  cardValue,
-        "*" : lambda currentValue, cardValue: currentValue *  cardValue,
-        "//": lambda currentValue, cardValue: currentValue // cardValue,
-        "**": lambda currentValue, cardValue: currentValue ** cardValue,
-        "%" : lambda currentValue, cardValue: currentValue %  cardValue if currentValue >= 0 else -(abs(currentValue) % cardValue)
-    }
-
-    # generate cost for shop phase
-    cost_tiers = {
-        "+" : 1, "-" : 1, "*" : 2, "//": 2, "**": 3, "%" : 3
-    }
-
-    card_back_path = "assets/Cards/back.png"
-
-    def __init__(self, operation: str, value: int, filepath: str, cost: int = None, ) -> None:
-        """Card objects have a value and operation. Cost is used during buy phase only."""
-        #  check if operation is valid (in operations_table.keys)
-        self.operation: str = operation
-        self.value: int = value
-        self.usable: bool = True
-
-        self._filepath: str = filepath
-
-        # find cost and function
-        self.cost: int = self.value*self.cost_tiers[self.operation] if cost == None else cost
-        self._function: function = self.operations_table[self.operation]
-
-    def __str__(self) -> str:
-        return f"Operation: {self.operation} Value: {self.value} Cost: {self.cost}"
-
-    def alt_str(self) -> str:
-        return f"{self.operation}{self.value}"
-
-    def use(self, currentValue: int) -> int:
-        """Returns new current value after card is played"""
-        self.void()
-        return self._function(currentValue, self.value)
-
-    def void(self):
-        """makes unselectable in shop phase"""
-        self.usable = False
-
-    def _copy(self) -> Card:
-        """returns a duplicate of the card"""
-        return Card(self.operation, self.value, self.get_filepath(), self.cost)
-
-    def get_filepath(self) -> str:
-        return self._filepath
-
-class Player:
-    def __init__(self) -> None:
-        """Handles player actions"""
-        ## Game Variables
-        # create a copy of mainDeck to play
-        self.main_deck: list[Card] = []
-        self.temp_deck: list[Card] = []
-
-        self.hand: list[Card] = []
-        self.hand_size = 5
-
-        self.cargo: int = 10
-        self.current_number: int = 0
-        self.target_number: int = 10
-        self.difficulty: int = 8
-
-        self.turn_state: str = 'continue'
-        self.level: int = 1
-        self.turn: int = 1
-
-        self.state: str = "game"
-
-        ## Shop Variables
-        self.shop_choices: list[Card] = []
-        self.shop_size: int = 5
-
-    # play phase functions
-
-    def to_game(self) -> None:
-        """denotes game mode == game"""
-        self.state = "game"
-
-    def to_shop(self) -> None:
-        """denotes game mode == shop"""
-        self.state = "shop"
-
-    def to_deathscreen(self) -> None:
-        """denotes game mode == death"""
-        self.state = "death"
-
-    def is_game(self) -> bool:
-        """checks game mode == game"""
-        return self.state == "game"
-
-    def is_shop(self) -> bool:
-        """checks game mode == shop"""
-        return self.state == "shop"
-
-    def create_temp_deck(self) -> None:
-        """makes copies of all cards from main_deck into temp_deck."""
-        self.temp_deck.clear()
-        for card in self.main_deck:
-            self.temp_deck.append(card._copy())
-
-    def reset_deck(self) -> None:
-        """Fill temp deck. Empty hand."""
-        self.create_temp_deck()
-        shuffle(self.temp_deck)
-        self.hand.clear()
-
-        self.turn: int = 1
-        self.turn_state: str = 'continue'
-
-    def draw(self) -> None:
-        """Add cards to your hand. Check lose condition."""
-        assert len(self.temp_deck) > 0
-        card = self.temp_deck.pop()
-        self.hand.append(card)
-
-    def play_card(self, position: int) -> None:
-        """Player plays a card and update current number. Check win condition."""
-        card: Card = self.hand[position]
-        assert card.usable
-        self.current_number = card.use(self.current_number)
-
-    def update_cargo(self, number: int) -> None:
-        """Updates cargo, used at the end of turn. Lowest cargo is 0."""
-        self.cargo += number
-        if self.cargo < 0:
-            self.cargo = 0
-
-    def is_win(self) -> bool:
-        """Check win condition."""
-        return self.current_number == self.target_number
-
-    def is_dead(self) ->bool:
-        """Checks if player is out of cards"""
-        return 0 == self.cards_left()
-
-    def end_turn(self) -> None:
-        """Call end of turn actions. if last turn, draw remaining"""
-        # put usable cards from hand to bottom of deck
-        for _ in self.hand:
-            card: Card = _
-            if card.usable:
-                self.temp_deck.insert(0, card)
-        self.hand.clear()
-        self.update_turn_state()
-        if self.turn_state != "win":
-            self.update_cargo(number= -1)
-            self.turn += 1
-
-    def draw_hand(self) -> None:
-        """draw until 5 cards, or draw all remaining"""
-        while len(self.hand) < 5:
-            try:
-                self.draw()
-            except:
-                break
-
-    def update_turn_state(self) -> None:
-        """checks game state at the end of the turn. uses 'win', 'last', 'dead', 'continue'"""
-        if self.is_win():
-            self.turn_state = 'win'
-        elif self.is_dead() or self.turn_state == 'last':
-            self.turn_state = 'dead'
-        else:
-            self.turn_state = 'continue'
-
-    def check_last_turn(self) -> bool:
-        """checks if it is last turn, flags "last" on self.turnstate"""
-        if self.is_dead():
-            self.turn_state = 'last'
-        return self.is_dead()
-
-    def any_cards_left(self) -> bool:
-        '''returns True if there are any cards left in hand'''
-        for card in self.hand:
-            if card.usable:
-                return True
-        return False
-
-    def cards_left(self) -> int:
-        """Returns number of cards left in the deck"""
-        return len(self.temp_deck)
-
-    def debug_print(self, deck):
-        """Prints cards in hand or temp_deck"""
-        for i in deck:
-            print(i)
-
-    # buy phase functions
-    def buy_card(self, index: int) -> None:
-        """Checks if player successfully buys card. Adds card to mainDeck if possible. buying dupes is not allowed"""
-        card: Card = self.shop_choices[index]
-        assert card.cost <= self.cargo, "insufficient funds!"
-        self.cargo -= card.cost
-        self.main_deck.append(card._copy())
-        self.shop_choices[index].void()
-        print(f"{card.alt_str()} added to deck!")
-
-    def populate_shop(self) -> None:
-        """fills shop with items based on how much cargo player has"""
-        all_cards: list[Card] = load_dan_cards_csv("Card Data.csv")
-        # pulls all cards that cost less that self.cargo
-        if self.cargo != 0:
-            possible_cards: list[Card] = list(filter(lambda x: x.cost <= self.cargo, all_cards))
-            # cheaper cards are more likely to be drawn, caps at 5 times the odds of most expensive card.
-            draw_odds: list[int] = [min([self.cargo - card.cost + 1, 5]) for card in possible_cards]
-        else:
-            # if cargo = 0, just generate any cards
-            possible_cards = all_cards
-            draw_odds = [1 for _ in range(len(possible_cards))]
-
-        self.shop_choices: list[Card] = choices(possible_cards, weights=draw_odds , k=5)
-
-        # make choices unique in id()
-        self.shop_choices: list[Card] = [card._copy() for card in self.shop_choices]
-
-    def next_level(self, reward: int) -> None:
-        """generates a new level"""
-        self.shop_choices.clear()
-        self.update_cargo(reward)
-        self.level += 1
-
-        # new objective is a math function that takes the current value and level
-        # and generates a numerical difference in the + or - direction. target is never negative for now.
-
-        base_modifier: int = self.level*self.difficulty
-        random_modifier: int = randint(0, base_modifier//2)
-
-        modify_objective: int = base_modifier + random_modifier
-
-        is_increase: bool = choice([True, False]) or modify_objective > self.target_number
-
-        if is_increase:
-            self.target_number += modify_objective
-        else:
-            self.target_number -= modify_objective
-
-    ########################## READING FUNCTIONS ##########################
-
-    def read_headings(self) -> dict:
-        """returns the target and current numbers"""
-        return {
-            "target" : self.target_number,
-            "current": self.current_number
-        }
-
-    def read_hand(self) -> list[Card]:
-        '''returns the hand of the player'''
-        return self.hand
-
-    def read_hand_filepath(self) -> list[str]:
-        '''returns the filepath of cards in hand of the player'''
-        return [card.get_filepath() for card in self.hand]
-
-    def read_turn_info(self) -> dict:
-        """returns the level, turn, cargo, and cards left in tempdeck"""
-        return {
-            "level"     : self.level,
-            "turn"      : self.turn,
-            "cargo"     : self.cargo,
-            "cards left": len(self.temp_deck)
-        }
-
-    def read_shop_info(self) -> dict:
-        '''returns the shop choices, cargo, and cards in maindeck'''
-        return {
-            "choices"    : [card.get_filepath() for card in self.shop_choices],
-            "costs"      : [card.cost for card in self.shop_choices],
-            "cargo"      : self.cargo,
-            "deck length": len(self.main_deck)
-        }
-
-    def read_level(self) -> int:
-        '''called on death to read the level of death'''
-        return self.level
-
-
-
-
-############################################# BUTTON INPUTS ##########################################
-def turn_start(player:Player):
-    """called when turn starts"""
-    player.draw_hand()
-    if player.check_last_turn():
-        # tkinter.messagebox
-        messagebox.showwarning("Warning", "This is your final turn!")
-        print("This is your final turn!")
-        print("-"*15)
-
-def start_level(player: Player):
-    """called when each level starts"""
-    player.reset_deck()
-    player.to_game()
-    turn_start(player)
-
-def main_play_button():
-    """called on the menu to start the game"""
-    player = create_player()
-    start_level(player)
-    return player
-
-def card_button(player: Player, button_index: int):
-    """called when card button is clicked in play phase"""
-    try:
-        player.play_card(button_index)
-        print(f"card played, {button_index} selected")
-    except:
-        messagebox.showinfo("Invalid!", "you already played this card.")
-
-def next_turn_button(player: Player):
-    """called when next turn is clicked"""
     player.end_turn()
-
     if player.turn_state == "win":
         player.populate_shop()
-        player.to_shop()
+        initiate_shop(player)
     elif player.turn_state == "dead":
         player.turn_state = "dead"
-        player.to_deathscreen()
+        initiate_death(player)
     else:
-        turn_start(player)
-
-def buy_button(player: Player, button_index: int):
-    """called when card is clicked in shop phase"""
-    player.buy_card(button_index)
-
-def done_shopping(player: Player):
-    """called when player is done shopping"""
-    player.next_level(reward= 10)
-    start_level(player)
-
-def sim_input(player: Player) -> int:
-    '''simulated button clicks, accepts 0, 1, 2, 3, 4, -1, 'quit' '''
-    while True:
-        play_input = input("enter: ")
-        if not play_input in ['0','1','2','3','4', '-1', 'quit']:
-            print("invalid input")
-            continue
-
-        if play_input == '-1':
-            return -1
-
-        if play_input == 'quit':
-            return 5
-
-        return int(play_input)
-
-
-
-
-def main_adp():
-    player = None
-    start = True
-    # tk window simulation
-    root = tk.Tk()
-    root.withdraw()
-    home_screen_cmd()
-
-    while True:
-        # input simulation
-        choice = sim_input(player)
-        if start:
-            # start turn button
-            player:Player = main_play_button()
-            render_turn(player)
-            render_hand(player)
-            start = False
-        elif choice == 5:
-            # concede button / testing kill command "quit"
-            render_death(player)
-            print("quitting...")
-            del player
-            return
-        elif player.is_game():
-            if choice == -1:
-                # next turn button
-                render_end_turn()
-                next_turn_button(player)
-
-                ## GRAPHICS
-                if player.is_game():
-                    render_turn(player)
-                    render_hand(player)
-                elif player.is_shop():
-                    render_end_game_report(player)
-                    render_shop(player)
-                elif player.turn_state == "dead":
-                    render_death(player)
-                    del player
-                    return
-                ## ---------
-            else:
-                # card buttons
-                card_button(player, choice)
-                render_hand(player)
-        elif player.is_shop():
-            if choice == -1 :
-                # finish shopping button
-                done_shopping(player)
-                render_shop_exit(player)
-                render_turn(player)
-                render_hand(player)
-            else:
-                # buy card buttons
-                buy_button(player, choice)
-                render_shop(player)
-
-
-def play_phase(player: Player) -> Player:
-    """Play Phase logic"""
-    player.reset_deck()
-    while True:
-        turn_running = True
         player.draw_hand()
+        if player.check_last_turn():
+            show_pop_up("FINAL TURN")
+        update_hand(player, animate=True)
+        update_turn_info(player)
+        
+################################################### Create Deck Box ###################################################
+deck_box = tk.Canvas(game_screen, width=game_screen_deck_box_width, height=game_screen_deck_box_height, bd=30, bg='black')
+deck_box.pack(pady=(10, 0))
 
-        if player.is_dead():
-            last_turn = True
-            print("This is your final turn!")
-            print("-"*15)
-        else:
-            last_turn = False
+deck_button_frame = tk.Frame(deck_box, highlightthickness=5, highlightbackground="white")
+deck_button_frame.configure(bg="black")
+deck_button_frame.grid(row=0, column=0, sticky="ew")
+deck_button_frame.grid_columnconfigure(0, minsize=110)
+deck_button_frame.grid_columnconfigure(2, minsize=110)
 
-        render_turn(player)
-        #card play loop
-        while turn_running:
-            render_hand(player)
-            player_choice = get_player_action(player)
+card_anchor:tk.Frame = tk.Frame(deck_button_frame, bg= "black")
+card_anchor.grid(row=0, column=1, sticky="ew")
 
-            if player_choice == -1:
-                render_end_turn()
-                turn_running = False
-            else:
-                player.play_card(player_choice)
-                # end turn if no cards left
-                if all([not card.usable for card in player.hand]):
-                    render_end_turn()
-                    turn_running = False
+#################################################### Create Buttons ####################################################
+card_back = tk.PhotoImage(file= "assets/Cards/back.png")
 
-        #end turn, check for win
-        player.end_turn()
-
-        if player.turn_state == "win":
-            render_end_game_report(player)
-            break
-        elif player.turn_state == "dead" or last_turn:
-            player.turn_state = "dead"
-            render_death(player)
-            break
-
-    return player
-
-def shop_phase(player: Player) -> Player:
-    """shop menu operation"""
-    # when shop is called, populate shop
-    player.populate_shop()
-    shopping = True
-    while shopping:
-        render_shop(player)
-        # get input
-        player_choice = get_shop_action(player)
-        print("-"*15)
-        # buy card
-        if player_choice == -1:
-            shopping = False
-        else:
-            try:
-                player.buy_card(player_choice)
-            except:
-                print("Card is too expensive!")
-        # terminate loop when done shopping
-    player.next_level(10)
-    render_shop_exit(player)
-    return player
-
-def home_screen_cmd() -> None:
-    """just a lil something for the title card"""
-    print("""_   _ ____ _  _ ____    ___  ____ _   _ ____    ____ ____ ____    _  _ _  _ _  _ ___  ____ ____ ____ ___  
- \_/  |  | |  | |__/    |  \ |__|  \_/  [__     |__| |__/ |___    |\ | |  | |\/| |__] |___ |__/ |___ |  \ 
-  |   |__| |__| |  \    |__/ |  |   |   ___]    |  | |  \ |___    | \| |__| |  | |__] |___ |  \ |___ |__/ 
-                                                                                                         
-                   ----- coded by Jean, Daniel, Ee Song, Saif, Siew Hean, Kaelen -----""")
-    print("type '0' to start game")
-
-def create_player() -> Player:
-    """creates a player with the starting hand"""
-    player = Player()
-    player.main_deck = load_dan_cards_csv("Starter Deck.csv")
-    return player
-
-def main_cmd():
-    """Whole game logic here"""
-    home_screen_cmd()
-    input()
-    # game setup here
-    player = create_player()
-    while True:
-        player = play_phase(player)
-        if player.turn_state == "dead":
-            break
-        player = shop_phase(player)
-
-def load_dan_cards_csv(directory: str) -> list[Card]:
+def on_card_play(player:Player, index:int) -> None:
     """
-    csv headings: operation,value,cost,filepath
-    returns a list of card objects
+    Called on card click. Disables card to prevent card from being played twice.
+    Checks for win condition after card is played.
     """
-    with open(directory) as f:
-        # [1:] to exclude the heading
-        card_info: list[str] = f.read().split()[1:]
-        cards = []
-        for i in card_info:
-            card_operation, card_value, card_cost, filepath = tuple(i.split(sep=","))
-            if card_cost == '':
-                new_card = Card(card_operation, int(card_value), filepath=filepath)
-            else:
-                new_card = Card(card_operation, int(card_value), filepath=filepath, cost= int(card_cost))
-            cards.append(new_card)
-    return cards
 
-def render_hand(player: Player):
-    """Prints out all relevant info per card play"""
-    print("-"*15)
-    print(f" TARGET HEADING: {player.target_number}")
-    print(f"CURRENT HEADING: {player.current_number}")
-    print("-"*15)
-    # print hand
-    print(f"Hand (playable cards)")
-    for i,_ in enumerate(player.hand):
-        card:Card = _
-        if card.usable:
-            print(f"Position {i} : {card.alt_str()}")
+    global Concede, Next_Turn, game_screen_cards
+    player.play_card(index)
+    game_screen_cards[index].config(state="disabled", image=card_back)
+    update_headings(player)
+    if player.is_win():
+        for i in range(len(game_screen_cards)):
+            game_screen_cards[i].config(state= "disabled")
+        Concede.config(state= "disabled")
+        Next_Turn.config(text= "TO SHOP >")
+        show_pop_up("LEVEL CLEAR!")
 
-def render_shop_exit(player:Player):
-    print(f"starting new level... Target: {player.target_number}. You recieve 10 more cargo!")
-    print("-"*15)
+card_play_dict:dict = {
+    0: lambda: on_card_play(player, 0),
+    1: lambda: on_card_play(player, 1),
+    2: lambda: on_card_play(player, 2),
+    3: lambda: on_card_play(player, 3),
+    4: lambda: on_card_play(player, 4)
+}
 
-def render_turn(player: Player):
-    """Only runs at the start of each turn"""
-    print(f"     LEVEL: {player.level}")
-    print(f"      TURN: {player.turn}")
-    print(f"     CARGO: {player.cargo}")
-    print(f"CARDS LEFT: {player.cards_left()}")
+for i in range(len(game_screen_cards)):
+    game_screen_cards[i] = tk.Button(card_anchor, image= card_back, width=125, height=175, borderwidth=0, bg='black',
+                        activebackground= "black", command = card_play_dict[i])
+    game_screen_cards[i].grid(row=0, column=i, padx=10, pady=15)
 
-def render_end_turn():
-    print("-"*15)
-    print("ending turn...")
-    print("-"*15)
 
-def render_end_game_report(player: Player):
-    """Runs after play phase, before buy phase"""
-    print("-"*15)
-    print("You have reached the next spaceport!")
-    print(f"Turns taken: {player.turn}")
-    print(f"Cargo: {player.cargo}")
-    print(f"Cards left in deck: {player.cards_left()}")
-    print("-"*15)
+################################################ Insert Description 2 #################################################
+description_2_button_frame = tk.Frame(game_screen)
+description_2_button_frame.configure(bg="black")
+description_2_button_frame.pack()
 
-def render_shop(player: Player):
-    """Runs during shop phase"""
-    print("-"*15)
-    print("<THE SHOP>")
-    for i, card in enumerate(player.shop_choices):
-        if card.usable:
-            print(f"Position {i} {card}")
-    print()
-    print(f"you have {player.cargo} cargo to spend,")
-    print(f"you have {len(player.main_deck)} cards in your deck")
+Cards_Left = tk.Label(description_2_button_frame, text="CARDS LEFT: " + str(3), font=("LoRes 9 Plus OT Wide", 14), fg="white",
+                bg="black")
+Cards_Left.grid(row=0, column=0, padx=(0, game_screen_deck_box_width/2+230))
 
-def render_death(player: Player):
-    """runs on endgame"""
-    print("-"*15)
-    print("Game Over")
-    print("you have run out of cards!")
-    print(f"Level: {player.level}")
-    input("press enter to return to main menu")
+################################################ Insert Concede Button ################################################
+concede_button_frame = tk.Frame(description_2_button_frame)
+concede_button_frame.configure(bg="black")
+concede_button_frame.grid(row=0, column=1)
 
-def get_player_action(player:Player) -> int:
-    """Get player action and return card position. -1 to indicate end turn"""
-    while True:
-        player_action = input("Input the position of card you wish to play. Input -1 to end turn. Input: ")
-        if player_action.isdigit() or player_action == "-1":
-            player_action = int(player_action)
-        else:
-            print("Invalid input")
-            continue
-        try:
-            assert player_action < len(player.hand)
-        except:
-            print("Invalid input")
-            continue
-        if (player.hand[player_action]).usable or player_action == -1:
-            break
-        else:
-            print("Invalid input")
-    return player_action
+Concede = tk.Button(concede_button_frame, text="CONCEDE", font=("LoRes 9 Plus OT Wide", 14), fg="white", bg= "black",
+                        command=lambda: initiate_death(player))
+Concede.grid(row=0, column=1, pady=(20, 0))
 
-def get_shop_action(player:Player) -> int:
-    """Get player's shop action and return card position. -1 to indicate done shopping"""
-    while True:
-        player_action = input("Input the position of card you wish to buy. Input -1 to finish shopping and start next level. Input: ")
-        if player_action.isdigit() or player_action == "-1":
-            player_action = int(player_action)
-        else:
-            print("Invalid input")
-            continue
-        try:
-            assert player_action < len(player.shop_choices)
-        except:
-            print("Invalid input")
-            continue
-        if (player.shop_choices[player_action]).usable or player_action == -1:
-            break
-        else:
-            print("Invalid input")
-    return int(player_action)
+################################################ Insert Win Message ################################################
+Pop_up_msg = tk.Label(game_screen, text="", font=("LoRes 9 Plus OT Wide", 20), fg="black", bg="black")
+Pop_up_msg.pack()
 
-if __name__ == "__main__":
-    main_adp()
+def show_pop_up(msg:str):
+    """Sets and blinks the pop-up message."""
+
+    global Pop_up_msg, root
+    Pop_up_msg.config(fg="black", text= msg)
+    blink_pop_up(7)
+
+'''
+The code for the blink function was adapted from the code found at
+https://stackoverflow.com/questions/27533244/how-to-make-a-flashing-text-box-in-tkinter
+'''
+
+def blink_pop_up(times:int) -> None:
+    """Helper functiont to blink the pop-up message."""
+
+    global Pop_up_msg, root
+    if times <= 0:
+        Pop_up_msg.config(fg= "white")
+    else:
+        current_color = Pop_up_msg.cget("fg")
+        next_color = "black" if current_color == "white" else "white"
+        Pop_up_msg.config(fg=next_color)
+        root.after(120, lambda: blink_pop_up(times - 1))
+
+######################################################### SHOP #########################################################
+def initiate_shop(player:Player) -> None:
+    """Called when shop is opened. Fill the shop with cards and other UI elements."""
+
+    global _shop_screen_cards_images, shop_screen_cards_button, shop_screen_cards_cost_data
+    global shop_screen_cards_cost, root, shop_screen
+    shop_dict = player.read_shop_info()
+
+    # shop is already populated by next turn button
+    card_path_str = shop_dict["choices"] # get paths for shop cards
+    card_costs = shop_dict["costs"]
+    for i, string in enumerate(card_path_str):
+        _shop_screen_cards_images[i] = tk.PhotoImage(file= string)
+        shop_screen_cards_button[i].config(image= _shop_screen_cards_images[i], state= "normal")
+        shop_screen_cards_cost_data[i] = card_costs[i]
+        shop_screen_cards_cost[i].config(text= f"COST:{card_costs[i]}")
+    
+    random_planet_message()
+    update_cargo(player)
+    update_deck_contents(player)
+    root.after(50, shop_screen.tkraise)
+
+def update_cargo(player:Player)-> None:
+    """Called to update player cargo."""
+
+    global Shop_cargo_left
+    Shop_cargo_left.config(text= f"CARGO LEFT: {player.cargo}")
+
+def update_deck_contents(player:Player) -> None:
+    """Called to update the deck contents."""
+
+    global Txt_deck
+    Txt_deck.config(text= f"YOUR DECK CONTAINS:\n{player.read_deck_qty()}")
+    update_buyable(player)
+
+def update_buyable(player:Player) -> None:
+    """Called to update card clickability in the shop."""
+
+    global shop_screen_cards_cost_data, shop_screen_cards_button
+    for i, cost in enumerate(shop_screen_cards_cost_data):
+        if cost > player.cargo:
+            shop_screen_cards_button[i].config(state="disabled")
+
+############################################### Create Planet Message ##################################################
+
+def random_planet_message():
+    """Create a random planet name for buy phase UI."""
+
+    global Planet_message
+    systems:list[str] = ['jenso', 'danel', 'eeso', 'saiza', 'sewhen', 'kael', 'tellar', 'nimbus', 'altair', 'alderaan',
+                         'coruscant', 'xaryxia', 'bespin', 'gallifrey', 'mondas', 'arrakis', 'krypton', 'xandar',
+                         'vulcan', 'andromeda', 'artemis-tau']
+    random_planet:str = random.choice(systems) + "-" + str(random.choice(range(1,100)))
+    Planet_message.config(text= f"YOU HAVE REACHED {random_planet.upper()}")
+
+Planet_message = tk.Label(shop_screen, text="YOU HAVE REACHED THE NEXT PLANET!", font=("LoRes 9 Plus OT Wide", 24), fg="white", bg="black",
+                 padx=-10)
+Planet_message.pack(pady=(25,0))
+
+################################################### Create Deck Box ###################################################
+shop_deck_box = tk.Canvas(shop_screen, width=900, height= 180, bd=30, bg='black', highlightthickness=5,
+                     highlightbackground="white")
+shop_deck_box.pack(pady=(15,10))
+
+shop_button_frame = tk.Frame(shop_deck_box, highlightthickness=5, highlightbackground="white")
+shop_button_frame.configure(bg="black")
+shop_button_frame.grid(row=0, column=0, sticky="ew")
+shop_button_frame.grid_columnconfigure(0, minsize=110)
+shop_button_frame.grid_columnconfigure(2, minsize=110)
+
+shop_header = tk.Label(shop_button_frame, text="THE CARD SHOP", font=("LoRes 9 Plus OT Wide", 20), fg="white", bg="black")
+shop_header.grid(row=0, column=1, pady=(5,0))
+
+shop_card_anchor:tk.Frame = tk.Frame(shop_button_frame, bg= "black")
+shop_card_anchor.grid(row=1, column=1, sticky="ew")
+
+#################################################### Create Buttons ####################################################
+description_button_frame = tk.Frame(shop_screen)
+description_button_frame.configure(bg="black")
+description_button_frame.pack()
+
+description_button_frame.grid_rowconfigure(2, minsize= 125)
+
+def on_card_buy(player:Player, index:int) -> None:
+    """Called when card is bought."""
+
+    global shop_screen_cards_button
+    try:
+        player.buy_card(index)
+    except:
+        # tkinter.messagebox (safety net)
+        messagebox.showerror("Insufficient Cargo!", "This card is too expensive!")
+        return
+    shop_screen_cards_button[index].config(state="disabled", image=card_back)
+    update_buyable(player)
+    update_cargo(player)
+    update_deck_contents(player)
+
+card_buy_dict:dict = {
+    0: lambda: on_card_buy(player, 0),
+    1: lambda: on_card_buy(player, 1),
+    2: lambda: on_card_buy(player, 2),
+    3: lambda: on_card_buy(player, 3),
+    4: lambda: on_card_buy(player, 4)
+}
+
+for i in range(len(shop_screen_cards_button)):
+    shop_screen_cards_button[i]:tk.Button = tk.Button(shop_card_anchor, image= card_back, width=125, height=175, borderwidth=0, bg='black',
+                        activebackground= "black", padx = 8, pady=60, command = card_buy_dict[i])
+    shop_screen_cards_button[i].grid(row=0, column=i, padx=10, pady=(10,0))
+
+##################################################### Insert Cost #####################################################
+for i in range(5):
+    shop_screen_cards_cost[i] = tk.Label(shop_card_anchor, text="COST:" + "0",
+                             font=("LoRes 9 Plus OT Wide", 14), fg="white", bg="black")
+    shop_screen_cards_cost[i].grid(row=1, column=i, padx=36, pady=10)
+
+################################################## Insert Cargo Value ##################################################
+Shop_cargo_left = tk.Label(description_button_frame, text="CARGO LEFT: " + "0",
+                      font=("LoRes 9 Plus OT Wide", 16), fg="white", bg="black")
+Shop_cargo_left.grid(row=1, column=2, pady=(5,0))
+
+############################################### Insert Deck Quantities #################################################
+placeholder_txt_deck:str = "1× [+1]   1× [+2]   1× [+3]   1× [+4]   1× [+5]   1× [+6]   1× [+7]   1× [+8]   1× [+9]"
+
+Txt_deck = tk.Label(description_button_frame, text= placeholder_txt_deck,
+                      font=("LoRes 9 Plus OT Wide", 14), fg="#999999", bg="black")
+Txt_deck.grid(row=2, column=2, pady=0)
+
+################################################## Insert Next Button ##################################################
+Next_Level = tk.Button(shop_screen, text="NEXT LEVEL", font=("LoRes 9 Plus OT Wide", 24), fg="white", bg="black", width=10, bd="15", highlightbackground="white",
+                      command=lambda: end_shopping(player))
+Next_Level.pack(pady=(10,0))
+
+def end_shopping(player:Player):
+    """Called when player has finished shopping. Start next level."""
+
+    player.next_level(reward= 10)
+    player.start_level()
+    initiate_level(player)
+
+Reward = tk.Label(shop_screen, text="+10 CARGO", font=("LoRes 9 Plus OT Wide", 14), fg="white", bg="black")
+Reward.pack(pady=2)
+
+###################################################### END SCREEN ######################################################
+
+def initiate_death(player:Player) -> None:
+    """Called upon death. Prepares death message."""
+
+    global Death_message, Level_score, root, end_screen
+    Death_message.config(text=random.choice(Death_list))
+    Level_score.config(text= f"YOU LOST ON: LEVEL {player.read_level()}")
+    root.after(50, end_screen.tkraise)
+    player.reset_player()
+
+##################################################### Insert Title #####################################################
+Title = tk.Label(end_screen, text='GAME OVER', font=("LoRes 9 Plus OT Wide", 60), fg="white", bg="black",
+                 padx=-10)
+Title.pack(pady=(end_screen_y_padding_from_top_window, 0))
+
+##################################################### Insert Level Score ###############################################
+Level_score = tk.Label(end_screen, text=F"YOU LOST ON: LEVEL", font=("LoRes 9 Plus OT Wide", 15), fg="white", bg="black",
+                 padx=-10)
+Level_score.pack(pady=0)
+
+##################################################### Insert Death Message #############################################
+R_A = "That's rough, buddy."
+R_B = "Too bad!"
+R_C = "Your cabbages! :("
+R_D = "This is extremely not stonks."
+R_E = "Lousiest gameplay of the year award goes to..."
+R_F = "Your co-pilot was not the impostor. Oops."
+R_G = "It seems that the Force was not with you."
+R_H = "You let a DALEK on board?? Why?????"
+R_J = "Should we get out and push?\nOh right, we're in space."
+R_K = "You seem to have died. Hmm."
+R_L = "This is a certified bruh moment"
+
+Death_list = [R_A, R_B, R_C, R_D, R_E, R_F, R_G, R_H, R_J, R_K, R_L]
+
+Death_message = tk.Label(end_screen, text=random.choice(Death_list), font=("LoRes 9 Plus OT Wide", 30), fg="white", bg="black",
+                 padx=-10)
+Death_message.pack(pady=35)
+Death_message.pack()
+
+################################################## Insert Main Menu Button #############################################
+button_frame = tk.Frame(end_screen)
+button_frame.configure(bg="black")
+button_frame.pack(pady=65)
+
+Main_Menu_Button = tk.Button(button_frame, text="Try Again?".upper(), font=("LoRes 9 Plus OT Wide", 24), fg="white", bg="black",
+                        borderwidth=10, highlightbackground="white",
+                        command=lambda: initiate_main())
+Main_Menu_Button.grid(row=1, column=0, padx=50)
+
+def initiate_main():
+    """Called upon pressing try again button. Back to main menu after death."""
+    global root, main_menu
+    root.after(50, main_menu.tkraise)
+
+################################################## Boot Up Game ########################################################
+
+initiate_main()
+root.mainloop()
