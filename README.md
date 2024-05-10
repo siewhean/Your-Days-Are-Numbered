@@ -4,7 +4,9 @@ _Your Days Are Numbered_ is a single-player roguelike cardgame. It is intended t
 
 ## How to Run
 
-The entire folder must be downloaded. Open your IDE, and use it to run the GUI.py file.
+The entire folder must be downloaded. Open your IDE, and use it to run the `main.py` file.
+
+Note: The font loading uses a windows specific code, so this game can only run on a Windows computer. 
 
 ## Premise
 
@@ -13,7 +15,7 @@ Set in the distant future, players take the role of an intergalactic cabbage mer
 ## Rules 
 Gameplay consists of two alternating phases:
 
-1.	Play Phase
+### Play Phase
 
 During the Play Phase, players use the cards in their deck to control the ship’s current heading. Each card contains one of the six basic Python operators (addition, subtraction, multiplication, integer division, exponent, modulo) and an integer number, forming a mathematical function. The objective is to use the functions on these cards to achieve the target heading (that is, the planet of destination – represented by a randomly generated number).
 
@@ -30,7 +32,7 @@ The number of cards remaining in the deck is displayed on the lower left-hand co
 
 If the player uses up all their cards without managing to reach the target heading, they lose the game. If the player reaches the target heading, they proceed to the Buy Phase.
 
-2.	Buy Phase
+### Buy Phase
 
 During the Buy Phase, players have arrived at the destination planet to sell their cabbages.
 
@@ -57,3 +59,5 @@ Python 3.9.1.
 ## Credits
 The font used in the GUI is Lo-Res, designed by Zuzana Licko from Emigre.
 The .png images used for the cards and game logo were made by [xdaniel-lim](https://github.com/xdaniel-lim), and are his original creation.
+
+Done by: Daniel Lim, Jean Soh, Kaelen Tay, Mohammad Saif, Toh Siew Hean, Loh Ee Song.
